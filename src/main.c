@@ -1,7 +1,7 @@
 #define ZUI_DEBUG
-#ifndef ZUI_CORE_IMPLEMENTATION
-#define ZUI_CORE_IMPLEMENTATION
-#include "zui_core.h"
+#ifndef ZUI_IMPLEMENTATION
+#define ZUI_IMPLEMENTATION
+#include "zui.h"
 #endif
 
 int main(void)
