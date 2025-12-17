@@ -12,16 +12,17 @@ int main(void)
     SetTargetFPS(60);
 
     ZuiInit();
+    Texture tex = LoadTexture("src/resources/circle.png");
 
     // clang-format off
     ZuiBeginFrame((Rectangle){16, 16, 200, 130}, tpink);
-        ZuiFramePad(16.0);
+        ZuiFramePad(16.0F);
         ZuiNewLabel("Login info");
         ZuiLabelAlignX(ZUI_ALIGN_X_CENTER);
         ZuiOffset(0,8);
         ZuiBeginRow();
            ZuiNewLabel("Username:");
-            ZuiNewFrame( tpink, 80, 18);
+           ZuiNewFrame( tpink, 80, 18);
         ZuiEndRow();
         ZuiBeginRow();
            ZuiNewLabel("Password:");
@@ -35,8 +36,8 @@ int main(void)
     ZuiEndFrame();
 
     ZuiBeginFrame((Rectangle){236, 16, 300, 47}, tpink);
-        ZuiFrameGap(16.0);
-        ZuiFramePad(16.0);
+        ZuiFrameGap(16.0F);
+        ZuiFramePad(16.0F);
         ZuiBeginRow();
         ZuiNewLabel("File");
         ZuiNewLabel("Edit");
@@ -47,13 +48,13 @@ int main(void)
     ZuiEndFrame();
 
     ZuiBeginFrame((Rectangle){16, 160, 200, 146}, tpink);
-        ZuiFramePad(16.0);
+        ZuiFramePad(16.0F);
         ZuiNewLabel("Save File");
         ZuiLabelAlignX(ZUI_ALIGN_X_CENTER);
         ZuiOffset(0,8);
         ZuiBeginRow();
             ZuiNewLabel("Filename:");
-            ZuiNewFrame( tpink, 96, 18);
+            ZuiNewFrame(tpink, 96, 18);
         ZuiEndRow();
         ZuiBeginRow();
             ZuiNewLabel("Location:");
@@ -62,7 +63,7 @@ int main(void)
         ZuiEndRow();
         ZuiOffset(64,12);
         ZuiBeginRow();
-            ZuiFrameGap(12.0);
+            ZuiFrameGap(12.0F);
             ZuiNewLabel("Cancel");
             ZuiLabelBackgroundColor(tpink);
             ZuiNewLabel("Save");
@@ -71,8 +72,8 @@ int main(void)
     ZuiEndFrame();
 
     ZuiBeginFrame((Rectangle){236, 80, 144, 198}, tpink);
-        ZuiFramePad(16.0);
-        ZuiFrameGap(4.0);
+        ZuiFramePad(16.0F);
+        ZuiFrameGap(4.0F);
         ZuiNewFrame(tpink, 112, 44);
         ZuiOffset(0,24);
         ZuiBeginRow();
@@ -117,6 +118,25 @@ int main(void)
         ZuiEndRow();
     ZuiEndFrame();
 
+    ZuiBeginFrame((Rectangle){405, 80, 190, 220}, tpink);
+        ZuiBeginRow();
+            ZuiNewTexture(tex);
+            ZuiNewTexture(tex);
+            ZuiNewTexture(tex);
+            ZuiNewTexture(tex);
+            ZuiNewTexture(tex);
+        ZuiEndRow();
+        ZuiBeginRow();
+            ZuiOffset(8,0);
+            ZuiNew9Slice(tex, 128, 128, 16, 16, 16, 16);
+            ZuiNew3YSlice(tex, 128, 16, 16);
+        ZuiEndRow();
+        ZuiBeginRow();
+            ZuiOffset(8,0);
+            ZuiNew3XSlice(tex, 128, 16, 16);
+            ZuiNewTexture(tex);
+        ZuiEndRow();
+    ZuiEndFrame();
     // clang-format on
 
     while (!WindowShouldClose())
@@ -125,12 +145,13 @@ int main(void)
 
         BeginDrawing();
         ClearBackground((Color){180, 180, 180, 255});
-        // DrawRectangle(214, 14, 23, 18, RED);
+
         ZuiRender();
 
         EndDrawing();
     }
 
+    ZuiPrintFullItemTree(true);
     ZuiExit();
 
     CloseWindow();
