@@ -151,7 +151,6 @@ int main(void)
         EndDrawing();
     }
 
-    ZuiPrintFullItemTree(true);
     ZuiExit();
 
     CloseWindow();

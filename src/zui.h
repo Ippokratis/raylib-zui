@@ -1,7 +1,10 @@
 #ifndef ZUI_H
 #define ZUI_H
 
+#include "math.h"
+#include "raylib.h"
 #include <limits.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -24,7 +27,9 @@ extern "C"
     // --- ZUI HEADERS ---
     // zui_core.h
 
-#include "raylib.h"
+#ifndef ZUI_DEBUG
+#define ZUI_DEBUG
+#endif
 
     ///-----------------------------------------------------------------ZUI_ASSERT
 
@@ -227,14 +232,20 @@ extern "C"
 
     typedef enum ZuiConstants
     {
-        ZUI_ALIGNMENT_MAX_ITEMS = 128,
+        ZUI_MAX_COMPONENTS_PER_ITEM = 16,
+        ZUI_MAX_COMPONENT_TYPES = 16,
+        ZUI_ITEM_TYPE_COUNT = 3, // frame, label, texture
+        ZUI_CHILDREN_CAPACITY = 8,
+        ZUI_ALIGNMENT_MAX_ITEMS = 8,
         ZUI_MAX_TEXT_LENGTH = 64,
         ZUI_MAX_WINDOWS = 64,
         ZUI_BASE_FONT_SIZE = 18,
         ZUI_TITLEBAR_HEIGHT = 28,
         ZUI_WINDOWS_CAPACITY = 16,
         ZUI_MAX_INPUT_CHARS = 32,
-        ZUI_FRAMES_CAPACITY = 16,
+        ZUI_ITEMS_CAPACITY = 64,
+        ZUI_TRANSFORMS_CAPACITY = 64,
+        ZUI_FRAMES_CAPACITY = 64,
         ZUI_FRAME_ITEMS_CAPACITY = 32,
         ZUI_LABELS_CAPACITY = 32,
         ZUI_TEXTURES_CAPACITY = 32,
@@ -245,62 +256,33 @@ extern "C"
         ZUI_MAX_FOCUSABLE_WIDGETS = 64,
         ZUI_CORNER_RADIUS = 8,
         ZUI_ROUNDNESS_SEGMENTS = 16,
-        ZUI_DEFAULT_ARENA_SIZE = 1048576, // 1MB
-        ZUI_DEFAULT_FRAME_PADDING = 8,
-        ZUI_DEFAULT_FRAME_GAP = 4,
+        ZUI_DEFAULT_ARENA_SIZE = 1048576, // 1MB =1048576
         ZUI_DEFAULT_SCREEN_WIDTH = 800,
         ZUI_DEFAULT_SCREEN_HEIGHT = 600,
         ZUI_DEFAULT_DPI_SCALE = 1,
         ZUI_ROOT_FRAME_ID = 0,
-        ZUI_MAX_ANCESTOR_DEPTH = 256,
+        ZUI_MAX_TREE_DEPTH = 64,
     } ZuiConstants;
 
-    static const float ZUI_DEFAULT_SPACING = 0.2F;
+    static const float ZUI_FONT_SPACING = 0.2F;
+    static const float ZUI_DEFAULT_FRAME_PADDING = 8.0F;
+    static const float ZUI_DEFAULT_FRAME_GAP = 4.0F;
+    static const unsigned int ZUI_ID_INVALID = UINT_MAX;
 
-#ifndef FRAMA_C
-    static const unsigned int ZUI_ID_INVALID = UINT_MAX - 1;
-#endif
-
+#define ZUI_BUILTIN_FRAME 0
+#define ZUI_BUILTIN_LABEL 1
+#define ZUI_BUILTIN_TEXTURE 2
+#define ZUI_BUILTIN_TYPE_COUNT 3
     typedef enum ZuiItemType
     {
         ZUI_FRAME,
         ZUI_LABEL,
         ZUI_TEXTURE,
-        ZUI_9SLICE_TEXTURE,
         ZUI_BUTTON,
-        ZUI_HORIZONTAL_3PATCH_TEXTURE,
-        ZUI_VERTICAL_3PATCH_TEXTURE,
         ZUI_NUMERIC_INPUT,
         ZUI_SLIDER,
         ZUI_KNOB,
     } ZuiItemType;
-
-    typedef enum ZuiAlignment
-    {
-        ZUI_ALIGN_TOP_LEFT,
-        ZUI_ALIGN_TOP_CENTER,
-        ZUI_ALIGN_TOP_RIGHT,
-        ZUI_ALIGN_MIDDLE_LEFT,
-        ZUI_ALIGN_CENTER,
-        ZUI_ALIGN_MIDDLE_RIGHT,
-        ZUI_ALIGN_BOTTOM_LEFT,
-        ZUI_ALIGN_BOTTOM_CENTER,
-        ZUI_ALIGN_BOTTOM_RIGHT,
-    } ZuiAlignment;
-
-    typedef enum ZuiAlignmentX
-    {
-        ZUI_ALIGN_X_LEFT,
-        ZUI_ALIGN_X_CENTER,
-        ZUI_ALIGN_X_RIGHT,
-    } ZuiAlignmentX;
-
-    typedef enum ZuiAlignmentY
-    {
-        ZUI_ALIGN_Y_TOP,
-        ZUI_ALIGN_Y_CENTER,
-        ZUI_ALIGN_Y_BOTTOM,
-    } ZuiAlignmentY;
 
     typedef enum ZuiPlacement
     {
@@ -318,163 +300,6 @@ extern "C"
         ZUI_LABEL_BELOW,
     } ZuiLabelPlacement;
 
-    ///----------------------------------------------------------- ZuiOption
-
-    typedef struct ZuiOptionInt
-    {
-        bool has;
-        int value;
-    } ZuiOptionInt;
-
-    typedef struct ZuiOptionColor
-    {
-        bool has;
-        Color value;
-    } ZuiOptionColor;
-
-    typedef struct ZuiOptionString
-    {
-        bool has;
-        const char *value;
-    } ZuiOptionString;
-
-    typedef struct ZuiOptionVector2
-    {
-        bool has;
-        Vector2 value;
-    } ZuiOptionVector2;
-
-    typedef struct ZuiOptionNPatchInfo
-    {
-        bool has;
-        NPatchInfo value;
-    } ZuiOptionNPatchInfo;
-
-    typedef struct ZuiOptionTexture2D
-    {
-        bool has;
-        Texture2D value;
-    } ZuiOptionTexture2D;
-
-    typedef struct ZuiOptionRectangle
-    {
-        bool has;
-        Rectangle value;
-    } ZuiOptionRectangle;
-
-    typedef struct ZuiOptionFloat
-    {
-        bool has;
-        float value;
-    } ZuiOptionFloat;
-
-    typedef struct ZuiOptionFont
-    {
-        bool has;
-        Font value;
-    } ZuiOptionFont;
-
-    typedef ZuiOptionInt ZuiOptionAlignment;
-    typedef ZuiOptionInt ZuiOptionPlacement;
-    typedef ZuiOptionInt ZuiOptionBool;
-
-    typedef enum ZuiPropertyType
-    {
-        ZUI_INT,
-        ZUI_FLOAT
-    } ZuiPropertyType;
-
-    typedef struct ZuiPropertyInt
-    {
-        int value;
-        int minValue;
-        int maxValue;
-        int step;
-        bool hasMinMax;
-        bool hasStep;
-    } ZuiPropertyInt;
-
-    typedef struct zuiPropertyFloat
-    {
-        float value;
-        float minValue;
-        float maxValue;
-        float step;
-        bool hasMinMax;
-        bool hasStep;
-    } zuiPropertyFloat;
-
-    typedef struct ZuiProperty
-    {
-        ZuiPropertyType type;
-        union
-        {
-            ZuiPropertyInt asInt;
-            zuiPropertyFloat asFloat;
-        };
-    } ZuiProperty;
-
-    ZuiOptionInt ZuiSomeInt(int v);
-
-    bool ZuiHasInt(ZuiOptionInt o);
-
-    ZuiOptionColor ZuiSomeColor(Color v);
-
-    bool ZuiHasColor(ZuiOptionColor o);
-
-    ZuiOptionString ZuiSomeString(const char *v);
-
-    bool ZuiHasString(ZuiOptionString o);
-
-    ZuiOptionVector2 ZuiSomeVector2(Vector2 v);
-
-    bool ZuiHasVector2(ZuiOptionVector2 o);
-
-    ZuiOptionNPatchInfo ZuiSomeNPatchInfo(NPatchInfo v);
-
-    bool ZuiHasNPatchInfo(ZuiOptionNPatchInfo o);
-
-    ZuiOptionTexture2D ZuiSomeTexture2D(Texture2D v);
-
-    bool ZuiHasTexture2D(ZuiOptionTexture2D o);
-
-    ZuiOptionRectangle ZuiSomeRectangle(Rectangle v);
-
-    bool ZuiHasRectangle(ZuiOptionRectangle o);
-
-    ZuiOptionFloat ZuiSomeFloat(float v);
-
-    bool ZuiHasFloat(ZuiOptionFloat o);
-
-    ZuiOptionFont ZuiSomeFont(Font v);
-
-    bool ZuiHasFont(ZuiOptionFont o);
-
-#define ZUI_SOME_EVAL(x) _Generic((x), \
-    int: ZuiSomeInt,                   \
-    float: ZuiSomeFloat,               \
-    char *: ZuiSomeString,             \
-    const char *: ZuiSomeString,       \
-    Color: ZuiSomeColor,               \
-    Vector2: ZuiSomeVector2,           \
-    Rectangle: ZuiSomeRectangle,       \
-    Texture2D: ZuiSomeTexture2D,       \
-    NPatchInfo: ZuiSomeNPatchInfo,     \
-    Font: ZuiSomeFont)(x)
-
-#define zui_some(...) ZUI_SOME_EVAL((__VA_ARGS__))
-
-#define zui_has(...) _Generic(__VA_ARGS__, \
-    ZuiOptionInt: ZuiHasInt,               \
-    ZuiOptionFloat: ZuiHasFloat,           \
-    ZuiOptionString: ZuiHasString,         \
-    ZuiOptionColor: ZuiHasColor,           \
-    ZuiOptionVector2: ZuiHasVector2,       \
-    ZuiOptionRectangle: ZuiHasRectangle,   \
-    ZuiOptionTexture2D: ZuiHasTexture2D,   \
-    ZuiOptionNPatchInfo: ZuiHasNPatchInfo, \
-    ZuiOptionFont: ZuiHasFont)(__VA_ARGS__)
-
     ///--------------------------------------------------------Utility Functions
 
     bool ZuiIsPowerOfTwo(size_t n);
@@ -484,22 +309,6 @@ extern "C"
     const char *ZuiResultToString(ZuiResult result);
 
     float ZuiPixelsToRoundness(Rectangle rect, float radius_px);
-
-    bool ZuiValidatePropertyPointer(const ZuiProperty *prop);
-
-    float ZuiGetPropertyValueAsFloat(const ZuiProperty *prop);
-
-    float ZuiGetPropertyMinAsFloat(const ZuiProperty *prop);
-
-    float ZuiGetPropertyMaxAsFloat(const ZuiProperty *prop);
-
-    float ZuiGetPropertyStepAsFloat(const ZuiProperty *prop);
-
-    bool ZuiGetPropertyHasMinMax(const ZuiProperty *prop);
-
-    bool ZuiGetPropertyHasStep(const ZuiProperty *prop);
-
-    void ZuiSetPropertyValueFromFloat(ZuiProperty *prop, float value);
 
     size_t ZuiStrlen(const char *s, size_t max_len);
 
@@ -551,8 +360,6 @@ extern "C"
     // -----------------------------------------------------------------------------
     // zui_dynarray.h
 
-    ///-----------------------------------------------------------ZuiDynArray Dynamic array
-
     typedef struct ZuiDynArray
     {
         void *items;
@@ -577,7 +384,7 @@ extern "C"
 #define ZUI_DYNARRAY_GET_TYPE(array, type, index) \
     ((type *)ZuiGetDynArray(array, index))
 
-    ///----------------------------------------------------Dynamic Array
+    ///-------------------------------------Dynamic Array
 
     ZuiResult ZuiInitDynArray(ZuiDynArray *array, ZuiArena *arena, unsigned int initialCapacity,
                               size_t itemSize, size_t itemAlignment, const char *typeName);
@@ -597,23 +404,468 @@ extern "C"
     void ZuiPrintDynArrayStats(const ZuiDynArray *array);
 
     // -----------------------------------------------------------------------------
+    // zui_component.h
+
+    typedef enum ZuiComponentId
+    {
+        ZUI_COMPONENT_TRANSFORM = 0,
+        ZUI_COMPONENT_LAYOUT = 1,
+        ZUI_COMPONENT_ALIGN = 2,
+        ZUI_COMPONENT_INTERACTION = 3,
+        ZUI_COMPONENT_STYLE = 4,
+        ZUI_COMPONENT_STATE = 5,
+        ZUI_COMPONENT_ANIMATION = 6,
+        // ZUI_COMPONENT_FOCUS = 7,
+        //  ZUI_COMPONENT_SCROLL = 8,
+        ZUI_COMPONENT_LAYER = 7,
+        // ZUI_COMPONENT_SPATIAL = 10,
+        ZUI_COMPONENT_CUSTOM_START = 8,
+    } ZuiComponentId;
+
+    //--------------------------- COMPONENT SYSTEM TYPES
+
+    typedef void (*ZuiComponentInitFunc)(void *data, unsigned int itemId);
+    typedef void (*ZuiComponentCleanupFunc)(void *data);
+
+    typedef struct ZuiComponentInfo
+    {
+        const char *name;
+        size_t dataSize;
+        size_t dataAlignment;
+        unsigned int initialCapacity;
+        ZuiComponentInitFunc init;
+        ZuiComponentCleanupFunc cleanup;
+        const unsigned int *requiredComponents;
+        unsigned int requiredComponentCount;
+        const unsigned int *exclusiveComponents;
+        unsigned int exclusiveComponentCount;
+    } ZuiComponentInfo;
+
+    typedef struct ZuiComponentRegistration
+    {
+        ZuiComponentInfo info;
+        ZuiDynArray dataArray;
+        unsigned int componentId;
+    } ZuiComponentRegistration;
+
+    typedef struct ZuiComponentRegistry
+    {
+        ZuiDynArray registrations;
+        unsigned int nextComponentId;
+    } ZuiComponentRegistry;
+
+    typedef struct ZuiItemComponent
+    {
+        unsigned int componentId;
+        unsigned int dataIndex;
+    } ZuiItemComponent;
+
+    //--------------------------- TRANSFORM COMPONENT
+
+    typedef struct ZuiTransform
+    {
+        unsigned int itemId;
+        Rectangle bounds;
+        Vector2 offset;
+        bool isDirty;
+    } ZuiTransform;
+
+    //--------------------------- LAYOUT COMPONENT
+
+    typedef enum ZuiAlignment
+    {
+        ZUI_ALIGN_TOP_LEFT,
+        ZUI_ALIGN_TOP_CENTER,
+        ZUI_ALIGN_TOP_RIGHT,
+        ZUI_ALIGN_MIDDLE_LEFT,
+        ZUI_ALIGN_CENTER,
+        ZUI_ALIGN_MIDDLE_RIGHT,
+        ZUI_ALIGN_BOTTOM_LEFT,
+        ZUI_ALIGN_BOTTOM_CENTER,
+        ZUI_ALIGN_BOTTOM_RIGHT,
+    } ZuiAlignment;
+
+    typedef enum ZuiAlignmentX
+    {
+        ZUI_ALIGN_X_LEFT,
+        ZUI_ALIGN_X_CENTER,
+        ZUI_ALIGN_X_RIGHT,
+    } ZuiAlignmentX;
+
+    typedef enum ZuiAlignmentY
+    {
+        ZUI_ALIGN_Y_TOP,
+        ZUI_ALIGN_Y_CENTER,
+        ZUI_ALIGN_Y_BOTTOM,
+    } ZuiAlignmentY;
+
+    typedef enum ZuiLayoutKind
+    {
+        ZUI_LAYOUT_NONE = 0,
+        ZUI_LAYOUT_VERTICAL,
+        ZUI_LAYOUT_HORIZONTAL,
+        ZUI_LAYOUT_GRID,
+    } ZuiLayoutKind;
+
+    typedef enum ZuiSizeMode
+    {
+        ZUI_SIZE_HUG,
+        ZUI_SIZE_FIXED,
+        ZUI_SIZE_FILL,
+    } ZuiSizeMode;
+
+    typedef enum ZuiJustify
+    {
+        ZUI_JUSTIFY_START,
+        ZUI_JUSTIFY_CENTER,
+        ZUI_JUSTIFY_END,
+        ZUI_JUSTIFY_SPACE_BETWEEN,
+        ZUI_JUSTIFY_SPACE_AROUND,
+        ZUI_JUSTIFY_SPACE_EVENLY,
+    } ZuiJustify;
+
+    typedef struct ZuiLayoutData
+    {
+        unsigned int itemId;
+        ZuiLayoutKind kind;
+        float spacing;
+        float padding;
+        unsigned int gridColumns;
+        ZuiAlignmentX childAlignX;
+        ZuiAlignmentY childAlignY;
+        ZuiJustify justify;
+        float measuredWidth;
+        float measuredHeight;
+    } ZuiLayoutData;
+
+    typedef struct ZuiAlignData
+    {
+        unsigned int itemId;
+        bool overrideX;
+        bool overrideY;
+        ZuiAlignmentX alignX;
+        ZuiAlignmentY alignY;
+        ZuiSizeMode widthMode;
+        ZuiSizeMode heightMode;
+        float fixedWidth;
+        float fixedHeight;
+    } ZuiAlignData;
+
+    //--------------------------- ANIMATION COMPONENT
+
+    typedef enum ZuiAnimationType
+    {
+        ZUI_ANIM_LINEAR,
+        ZUI_ANIM_EASE_OUT,
+        ZUI_ANIM_SPRING,
+    } ZuiAnimationType;
+
+    typedef enum ZuiAnimationSlot
+    {
+        ZUI_ANIM_SLOT_HOVER = 0,
+        ZUI_ANIM_SLOT_PRESS = 1,
+        ZUI_ANIM_SLOT_FOCUS = 2,
+        ZUI_ANIM_SLOT_ALPHA = 3,
+        ZUI_ANIM_SLOT_OFFSET_X = 4,
+        ZUI_ANIM_SLOT_OFFSET_Y = 5,
+        ZUI_ANIM_SLOT_SCALE = 6,
+        ZUI_ANIM_SLOT_CUSTOM = 7,
+    } ZuiAnimationSlot;
+
+    typedef struct ZuiAnimation
+    {
+        float value;
+        float target;
+        float velocity;
+        float duration;
+        float elapsed;
+        bool active;
+        ZuiAnimationType type;
+        float damping;
+        float stiffness;
+    } ZuiAnimation;
+
+    typedef struct ZuiAnimationData
+    {
+        unsigned int itemId;
+        ZuiAnimation slots[8];
+        unsigned int activeCount;
+    } ZuiAnimationData;
+
+    //---------------------------  INTERACTION COMPONENT
+
+    typedef enum ZuiMouseButton
+    {
+        ZUI_MOUSE_LEFT = 0,
+        ZUI_MOUSE_RIGHT = 1,
+        ZUI_MOUSE_MIDDLE = 2,
+    } ZuiMouseButton;
+
+    typedef struct ZuiInteractionData
+    {
+        unsigned int itemId;
+        bool isHovered;
+        bool wasHovered;
+        bool isPressed;
+        bool wasPressed;
+        bool isFocused;
+        bool wasFocused;
+        Vector2 mousePosition;
+        Vector2 mouseDelta;
+        ZuiMouseButton pressedButton;
+        float hoverTime;
+        float pressTime;
+        bool capturesMouse;
+        bool capturesKeyboard;
+        bool acceptsFocus;
+        bool blocksInput;
+        void (*onHoverEnter)(unsigned int itemId);
+        void (*onHoverExit)(unsigned int itemId);
+        void (*onClick)(unsigned int itemId, ZuiMouseButton button);
+        void (*onPress)(unsigned int itemId, ZuiMouseButton button);
+        void (*onRelease)(unsigned int itemId, ZuiMouseButton button);
+        void (*onFocus)(unsigned int itemId);
+        void (*onBlur)(unsigned int itemId);
+    } ZuiInteractionData;
+
+    //---------------------------  STYLE COMPONENT
+
+    typedef struct ZuiColorSet
+    {
+        Color normal;
+        Color hovered;
+        Color pressed;
+        Color focused;
+        Color disabled;
+    } ZuiColorSet;
+
+    typedef struct ZuiBorderStyle
+    {
+        float thickness;
+        float radius;
+        Color color;
+        bool enabled;
+    } ZuiBorderStyle;
+
+    typedef struct ZuiStyleData
+    {
+        unsigned int itemId;
+        ZuiColorSet background;
+        ZuiColorSet foreground;
+        ZuiColorSet border;
+        ZuiBorderStyle borderNormal;
+        ZuiBorderStyle borderHovered;
+        ZuiBorderStyle borderPressed;
+        ZuiBorderStyle borderFocused;
+        ZuiBorderStyle borderDisabled;
+        Font font;
+        float fontSize;
+        float fontSpacing;
+        Color textColor;
+        bool useCustomFont;
+        bool hasShadow;
+        Color shadowColor;
+        Vector2 shadowOffset;
+        float shadowBlur;
+        const char *themeOverride;
+    } ZuiStyleData;
+
+    //---------------------------  LAYER COMPONENT
+
+    typedef enum ZuiLayerPreset
+    {
+        ZUI_LAYER_BACKGROUND = 0,
+        ZUI_LAYER_CONTENT = 100,
+        ZUI_LAYER_OVERLAY = 1000,
+        ZUI_LAYER_TOOLTIP = 2000,
+        ZUI_LAYER_DEBUG = 3000,
+    } ZuiLayerPreset;
+
+    typedef struct ZuiLayerData
+    {
+        unsigned int itemId;
+        int layer;
+        int order;
+        bool blocksInput;
+    } ZuiLayerData;
+
+    //---------------------------  STATE COMPONENT
+
+    typedef enum ZuiValidationState
+    {
+        ZUI_VALIDATION_NONE = 0,
+        ZUI_VALIDATION_SUCCESS = 1,
+        ZUI_VALIDATION_WARNING = 2,
+        ZUI_VALIDATION_ERROR = 3,
+    } ZuiValidationState;
+
+    typedef struct ZuiStateData
+    {
+        unsigned int itemId;
+        bool isEnabled;
+        bool isVisible;
+        bool isReadOnly;
+        bool isSelected;
+        bool isActive;
+        ZuiValidationState validationState;
+        char validationMessage[256];
+        bool isLoading;
+        float loadingProgress;
+        bool isDirty;
+        bool needsRedraw;
+    } ZuiStateData;
+
+    //---------------------------  COMPONENT SYSTEM API
+
+    ZuiResult ZuiInitComponentRegistry(void);
+    unsigned int ZuiRegisterComponent(const ZuiComponentInfo *info);
+    void ZuiRegisterAllComponents(void);
+
+    void *ZuiItemAddComponent(unsigned int itemId, unsigned int componentId);
+    void *ZuiItemGetComponent(unsigned int itemId, unsigned int componentId);
+    const void *ZuiItemGetComponentConst(unsigned int itemId, unsigned int componentId);
+    bool ZuiItemHasComponent(unsigned int itemId, unsigned int componentId);
+    bool ZuiItemRemoveComponent(unsigned int itemId, unsigned int componentId);
+
+    const ZuiComponentInfo *ZuiGetComponentInfo(unsigned int componentId);
+    unsigned int ZuiGetComponentIdByName(const char *name);
+    bool ZuiValidateComponentDependencies(unsigned int itemId, unsigned int componentId);
+
+    ZuiComponentRegistration *ZuiGetComponentRegistration(unsigned int componentId);
+    const ZuiComponentRegistration *ZuiGetComponentRegistrationConst(unsigned int componentId);
+
+    void ZuiPrintItemComponents(unsigned int itemId);
+    void ZuiPrintRegisteredComponents(void);
+
+    //---------------------------  TRANSFORM API
+
+    const ZuiTransform *ZuiGetTransform(unsigned int itemId);
+    ZuiTransform *ZuiGetTransformMut(unsigned int itemId);
+    unsigned int ZuiCreateTransform(unsigned int itemId, Rectangle bounds);
+
+    void ZuiSetTransformBounds(unsigned int itemId, Rectangle bounds);
+    void ZuiSetTransformOffset(unsigned int itemId, Vector2 offset);
+    Rectangle ZuiGetTransformBounds(unsigned int itemId);
+    void ZuiMarkTransformDirty(unsigned int itemId);
+    void ZuiPrintTransform(unsigned int itemId);
+
+    //---------------------------  LAYOUT API
+
+    ZuiLayoutData *ZuiGetLayoutDataMut(unsigned int itemId);
+    const ZuiLayoutData *ZuiGetLayoutData(unsigned int itemId);
+    ZuiAlignData *ZuiGetAlignDataMut(unsigned int itemId);
+    const ZuiAlignData *ZuiGetAlignData(unsigned int itemId);
+
+    ZuiResult ZuiItemSetLayout(unsigned int itemId, ZuiLayoutKind kind);
+    void ZuiLayoutSetSpacing(unsigned int itemId, float spacing);
+    void ZuiLayoutSetPadding(unsigned int itemId, float padding);
+    void ZuiLayoutSetGridColumns(unsigned int itemId, unsigned int columns);
+    void ZuiLayoutSetChildAlignX(unsigned int itemId, ZuiAlignmentX align);
+    void ZuiLayoutSetChildAlignY(unsigned int itemId, ZuiAlignmentY align);
+    void ZuiLayoutSetJustify(unsigned int itemId, ZuiJustify justify);
+
+    void ZuiItemSetAlignX(unsigned int itemId, ZuiAlignmentX align);
+    void ZuiItemSetAlignY(unsigned int itemId, ZuiAlignmentY align);
+    void ZuiItemSetSizeMode(unsigned int itemId, ZuiSizeMode widthMode, ZuiSizeMode heightMode);
+    void ZuiItemSetFixedSize(unsigned int itemId, float width, float height);
+
+    unsigned int ZuiBeginVertical(Vector2 pos, float spacing, Color color);
+    unsigned int ZuiBeginHorizontal(Vector2 pos, float spacing, Color color);
+    unsigned int ZuiBeginGrid(Vector2 pos, unsigned int columns, float spacing, Color color);
+    unsigned int ZuiBeginVerticalCentered(float spacing, Color color);
+    unsigned int ZuiBeginRow2(float spacing);
+    unsigned int ZuiBeginColumn(float spacing);
+    void ZuiEndRow(void);
+    void ZuiBeginRow(void);
+    void ZuiEndFrame2(void);
+
+    //---------------------------  ANIMATION API
+
+    ZuiAnimationData *ZuiGetAnimationMut(unsigned int itemId);
+    const ZuiAnimationData *ZuiGetAnimation(unsigned int itemId);
+    ZuiAnimationData *ZuiAddAnimation(unsigned int itemId);
+
+    void ZuiAnimSetTarget(unsigned int itemId, ZuiAnimationSlot slot, float target);
+    float ZuiAnimGetValue(unsigned int itemId, ZuiAnimationSlot slot);
+    void ZuiAnimSetDuration(unsigned int itemId, ZuiAnimationSlot slot, float duration);
+    void ZuiAnimSetSpring(unsigned int itemId, ZuiAnimationSlot slot, float damping, float stiffness);
+    void ZuiAnimSetType(unsigned int itemId, ZuiAnimationSlot slot, ZuiAnimationType type);
+    void ZuiAnimReset(unsigned int itemId, ZuiAnimationSlot slot, float value);
+
+    //---------------------------  INTERACTION API
+
+    ZuiInteractionData *ZuiGetInteractionMut(unsigned int itemId);
+    const ZuiInteractionData *ZuiGetInteraction(unsigned int itemId);
+    ZuiInteractionData *ZuiAddInteraction(unsigned int itemId);
+
+    void ZuiEnableInteraction(unsigned int itemId);
+    void ZuiSetHoverCallback(unsigned int itemId, void (*onHover)(unsigned int));
+    void ZuiSetClickCallback(unsigned int itemId, void (*onClick)(unsigned int, ZuiMouseButton));
+    bool ZuiIsItemHovered(unsigned int itemId);
+    bool ZuiIsItemPressed(unsigned int itemId);
+    bool ZuiIsItemFocused(unsigned int itemId);
+
+    //---------------------------  STYLE API
+
+    ZuiStyleData *ZuiGetStyleMut(unsigned int itemId);
+    const ZuiStyleData *ZuiGetStyle(unsigned int itemId);
+    ZuiStyleData *ZuiAddStyle(unsigned int itemId);
+
+    void ZuiSetBackgroundColor(unsigned int itemId, Color normal, Color hovered, Color pressed);
+    void ZuiSetBorderStyle(unsigned int itemId, float thickness, float radius, Color color);
+    void ZuiSetTextStyle(unsigned int itemId, Font font, float size, Color color);
+    void ZuiApplyTheme(unsigned int itemId, const char *themeName);
+
+    //---------------------------  STATE API
+
+    ZuiStateData *ZuiGetStateMut(unsigned int itemId);
+    const ZuiStateData *ZuiGetState(unsigned int itemId);
+    ZuiStateData *ZuiAddState(unsigned int itemId);
+
+    void ZuiSetEnabled(unsigned int itemId, bool enabled);
+    void ZuiSetVisible(unsigned int itemId, bool visible);
+    void ZuiSetReadOnly(unsigned int itemId, bool readOnly);
+    void ZuiSetValidationState(unsigned int itemId, ZuiValidationState state, const char *message);
+    bool ZuiIsEnabled(unsigned int itemId);
+    bool ZuiIsVisible(unsigned int itemId);
+
+    //---------------------------  LAYER API
+
+    ZuiLayerData *ZuiGetLayerMut(unsigned int itemId);
+    const ZuiLayerData *ZuiGetLayer(unsigned int itemId);
+    ZuiLayerData *ZuiAddLayer(unsigned int itemId);
+
+    void ZuiSetLayer(unsigned int itemId, int layer, int order);
+    void ZuiSetLayerPreset(unsigned int itemId, ZuiLayerPreset preset);
+    void ZuiSetLayerBlocksInput(unsigned int itemId, bool blocks);
+    void ZuiRaiseToFront(unsigned int itemId);
+    void ZuiLowerToBack(unsigned int itemId);
+
+    int ZuiGetLayerValue(unsigned int itemId);
+    int ZuiGetLayerOrder(unsigned int itemId);
+    bool ZuiLayerBlocksInput(unsigned int itemId);
+
+    //---------------------------  SYSTEM UPDATE FUNCTIONS
+
+    void ZuiUpdateInteractions(float deltaTime);
+    void ZuiUpdateAnimations(float deltaTime);
+
+    // -----------------------------------------------------------------------------
     // zui_item.h
 
-    typedef void (*ZuiUpdateFunction)(unsigned int dataIndex);
-    typedef void (*ZuiRenderFunction)(unsigned int dataIndex);
+    // #include "raylib.h"
 
     typedef struct ZuiItem
     {
+        ZuiDynArray children; // costs 32kb per 1k items, 800 leaf, 200 container
+        unsigned int type;
         unsigned int id;
         unsigned int parentId;
-        ZuiItemType type;
         unsigned int dataIndex;
-        ZuiRenderFunction renderFunction;
-        ZuiUpdateFunction updateFunction;
-        ZuiDynArray children;
-        bool hasChildren;
-        bool isVisible;
-        bool isInsideWindow;
+        ZuiItemComponent components[ZUI_MAX_COMPONENTS_PER_ITEM];
+        unsigned int componentCount;
+        bool isContainer;
+        bool canMove;
     } ZuiItem;
 
     const ZuiItem *ZuiGetItem(unsigned int id);
@@ -628,140 +880,173 @@ extern "C"
 
     void ZuiPrintItemTree(unsigned int id, int depth);
 
-    void ZuiPrintFullItemTree(bool withData);
-
-    void ZuiPrintItemTreeData(unsigned int id, int depth);
+    void ZuiPrintFullItemTree(void);
 
     // -----------------------------------------------------------------------------
-    // zui_frame.h
+    // zui_behavior.h
 
-#include "raylib.h"
+    typedef void (*ZuiUpdateFunction)(unsigned int dataIndex);
+    typedef void (*ZuiRenderFunction)(unsigned int dataIndex);
+
+    typedef struct ZuiItemBehavior
+    {
+        ZuiUpdateFunction update;
+        ZuiRenderFunction render;
+    } ZuiItemBehavior;
+
+    void ZuiDispatchUpdate(const ZuiItem *item);
+
+    void ZuiDispatchRender(const ZuiItem *item);
+
+    // -----------------------------------------------------------------------------
+    // zui_type_registry.h
+
+    typedef struct ZuiTypeInfo ZuiTypeInfo;
+    typedef struct ZuiTypeRegistry ZuiTypeRegistry;
+
+    typedef void (*ZuiTypeInitFunc)(void *data, unsigned int itemId);
+    typedef void (*ZuiTypeCleanupFunc)(void *data);
+    typedef Vector2 (*ZuiTypeMeasureFunc)(void *data);
+
+    struct ZuiTypeInfo
+    {
+        const char *name;             // Human-readable type name
+        size_t dataSize;              // sizeof(YourWidgetData)
+        size_t dataAlignment;         // alignof(YourWidgetData)
+        unsigned int initialCapacity; // Initial array capacity
+
+        ZuiUpdateFunction update;   // Update function (can be NULL)
+        ZuiRenderFunction render;   // Render function (required)
+        ZuiTypeInitFunc init;       // Called when data is created (can be NULL)
+        ZuiTypeCleanupFunc cleanup; // Called before data is freed (can be NULL)
+        ZuiTypeMeasureFunc measure; // Custom measurement (can be NULL)
+    };
+
+    typedef struct ZuiTypeRegistration
+    {
+        ZuiTypeInfo info;
+        ZuiDynArray dataArray; // Storage for this type's data
+        unsigned int typeId;   // Assigned type ID
+        bool isBuiltin;        // Is this a built-in type?
+    } ZuiTypeRegistration;
+
+    struct ZuiTypeRegistry
+    {
+        ZuiDynArray registrations; // Array of ZuiTypeRegistration
+        unsigned int nextTypeId;   // Next available type ID
+    };
+
+    ZuiResult ZuiInitTypeRegistry(void);
+
+    unsigned int ZuiRegisterType(const ZuiTypeInfo *typeInfo);
+
+    const ZuiTypeInfo *ZuiGetTypeInfo(unsigned int typeId);
+
+    unsigned int ZuiGetTypeIdByName(const char *name);
+
+    bool ZuiIsValidTypeId(unsigned int typeId);
+
+    ZuiTypeRegistration *ZuiGetTypeRegistration(unsigned int typeId);
+
+    const ZuiTypeRegistration *ZuiGetTypeRegistrationConst(unsigned int typeId);
+
+    unsigned int ZuiCreateTypedItem(unsigned int typeId);
+
+    void *ZuiGetTypedData(unsigned int itemId);
+
+    const void *ZuiGetTypedDataConst(unsigned int itemId);
+
+    // -----------------------------------------------------------------------------
+    // zui_frame.h (enhanced)
+
+    // #include "zui_core.h"
 
     typedef struct ZuiFrameData
     {
         unsigned int itemId;
-        Color backgroundColor;
-        Color outlineColor;
-        Rectangle bounds;
-        float padding;
-        float gap;
-        float outlineThickness;
-        bool hasBackground;
-        bool hasOutline;
+        float cornerRadius;
+        bool hasShadow;
     } ZuiFrameData;
 
-    typedef struct ZuiPadding
-    {
-        float left;
-        float right;
-        float top;
-        float bottom;
-    } ZuiPadding;
-
-    typedef struct ZuiItemOptions
-    {
-        Vector2 cursor;
-        ZuiPlacement placement;
-        ZuiAlignment alignment;
-        ZuiItemType type;
-        unsigned int id;
-        bool isWindowFrame;
-    } ZuiItemOptions;
-
-    unsigned int ZuiCreateRootFrame(Rectangle bounds, Color color);
-
+    // Creation
     unsigned int ZuiCreateFrame(Rectangle bounds, Color color);
-
-    const ZuiFrameData *ZuiGetFrameData(unsigned int itemId);
-
-    ZuiFrameData *ZuiGetFrameDataMut(const unsigned int itemId);
-
-    void ZuiUpdateFrame(unsigned int dataIndex);
-
-    void ZuiRenderFrame(unsigned int dataIndex);
-
-    Rectangle ZuiGetContentArea(Rectangle parent, ZuiPadding padding);
-
-    Rectangle ZuiAlignRectangle(Rectangle parent, Vector2 childSize, ZuiPadding padding, ZuiAlignment alignment);
-
-    Rectangle ZuiCalculateChildBounds(Rectangle childBounds, Rectangle bounds, ZuiItemOptions options);
-
-    const char *ZuiGetAlignmentName(ZuiAlignment alignment);
-
-    void ZuiPrintFrame(unsigned int id);
-
     unsigned int ZuiBeginFrame(Rectangle bounds, Color color);
-
     void ZuiEndFrame(void);
-
     unsigned int ZuiNewFrame(Color color, float width, float height);
 
+    // Data access
+    const ZuiFrameData *ZuiGetFrameData(unsigned int itemId);
+    ZuiFrameData *ZuiGetFrameDataMut(unsigned int itemId);
+
+    // Styling
     void ZuiFrameBackground(Color color);
-
     void ZuiFrameOutline(Color color, float thickness);
-
     void ZuiFrameGap(float gap);
-
     void ZuiFramePad(float pad);
-
     void ZuiFrameOffset(float x, float y);
+    void ZuiFrameCornerRadius(float radius);
+
+    // Scrolling
+    void ZuiFrameMakeScrollable(bool vertical, bool horizontal);
+
+    // Rendering
+    void ZuiUpdateFrame(unsigned int dataIndex);
+    void ZuiRenderFrame(unsigned int dataIndex);
+    void ZuiPrintFrame(unsigned int id);
+
+    // Helper functions
+    float ZuiGetFramePadding(unsigned int frameId);
+    float ZuiGetFrameSpacing(unsigned int frameId);
 
     // -----------------------------------------------------------------------------
     // zui_label.h
 
-#include "raylib.h"
-
     typedef struct ZuiLabelData
     {
         unsigned int itemId;
-        // flawfinder: ignore (bounded by ZUI_MAX_TEXT_LENGTH +1, null-terminated)
         char text[ZUI_MAX_TEXT_LENGTH + 1];
         Font font;
-        Rectangle bounds;
-        Color textColor;
-        Color backgroundColor;
-        float spacing;
         float fontSize;
-        bool hasBackground;
+        float fontSpacing;
+        bool isMono;
+        void (*onClickSimple)(unsigned int); // Simple click callback (no button parameter)
     } ZuiLabelData;
 
+    // Creation
     unsigned int ZuiCreateLabel(const char *text, Font font);
-
-    const ZuiLabelData *ZuiGetLabelData(unsigned int itemId);
-
-    ZuiLabelData *ZuiGetLabelDataMut(unsigned int itemId);
-
-    void ZuiRenderLabel(unsigned int dataIndex);
-
-    void ZuiPrintLabel(unsigned int id);
-
-    unsigned int ZuiLabelEx(const char *text, const bool isMono);
-
+    unsigned int ZuiNewLabel(const char *text);
     unsigned int ZuiNewMonoLabel(const char *text);
 
-    unsigned int ZuiNewLabel(const char *text);
+    // Data access
+    const ZuiLabelData *ZuiGetLabelData(unsigned int itemId);
+    ZuiLabelData *ZuiGetLabelDataMut(unsigned int itemId);
 
+    // Styling (uses Style component)
     void ZuiLabelTextColor(Color textColor);
-
     void ZuiLabelBackgroundColor(Color backgroundColor);
 
+    // Positioning (uses Align component)
     void ZuiLabelAlignX(ZuiAlignmentX align);
-
     void ZuiLabelOffset(float x, float y);
+
+    // Interactivity (adds Interaction component)
+    void ZuiLabelMakeClickable(void (*onClick)(unsigned int));
+
+    // Rendering
+    void ZuiRenderLabel(unsigned int dataIndex);
+    void ZuiPrintLabel(unsigned int id);
 
     // -----------------------------------------------------------------------------
     // zui_texture.h
-
-#include "raylib.h"
 
     typedef struct ZuiTextureData
     {
         unsigned int itemId;
         Texture2D texture;
         NPatchInfo npatch;
-        Rectangle bounds;
         Color color;
         bool isPatch;
+        bool isVisible;
     } ZuiTextureData;
 
     unsigned int ZuiCreateTexture(Texture2D texture);
@@ -771,8 +1056,6 @@ extern "C"
     ZuiTextureData *ZuiGetTextureDataMut(unsigned int itemId);
 
     void ZuiRenderTexture(unsigned int dataIndex);
-
-    void ZuiRenderPatchTexture(unsigned int dataIndex);
 
     void ZuiPrintTexture(unsigned int id);
 
@@ -785,10 +1068,9 @@ extern "C"
     unsigned int ZuiNew3YSlice(Texture2D tex, int height, int top, int bottom);
 
     unsigned int ZuiNew9Slice(Texture2D tex, int width, int height, int left, int top, int right, int bottom);
+
     // -----------------------------------------------------------------------------
     // zui_context.h
-
-#include "raylib.h"
 
     typedef struct ZuiCursor
     {
@@ -811,11 +1093,8 @@ extern "C"
     {
         ZuiCursor cursor;
         ZuiDynArray items;
-
-        ZuiDynArray frameData;
-        ZuiDynArray textureData;
-        ZuiDynArray labelData;
-
+        ZuiTypeRegistry typeRegistry;
+        ZuiComponentRegistry componentRegistry;
         Font font;
         Font monoFont;
         int dpiScale;
@@ -834,25 +1113,180 @@ extern "C"
 #endif
 
     void ZuiAdvanceCursor(float width, float height);
+
     void ZuiPrintCursor(void);
+
     void ZuiAdvanceLine(void);
+
     void ZuiPlaceAt(float x, float y);
+
     void ZuiOffset(float x, float y);
-    void ZuiBeginRow(void);
-    void ZuiEndRow(void);
+
+    // void ZuiBeginRow(void);
+
+    // void ZuiEndRow(void);
 
     bool ZuiIsInitialized(void);
+
     ZuiContext *ZuiGetContext(void);
+
+    void ZuiUpdateRestPosition(void);
+
+    ZuiFrameData *ZuiGetActiveFrameDataMut(void);
+
+    ZuiLayoutData *ZuiGetActiveLayoutMut(void);
+
+    bool ZuiEnsureContext(ZuiResult error_code, const char *msg);
+
     void ZuiUpdate(void);
+
     void ZuiRender(void);
+
     bool ZuiInit(void);
+
     void ZuiExit(void);
 
     // -----------------------------------------------------------------------------
 
 #ifdef ZUI_IMPLEMENTATION
-// zui_arena.c
-#include "raylib.h"
+    // --- ZUI IMPLEMENTATION ---
+    // zui_core.c
+
+    ///------------------------------------------------------------Internal Utility Functions
+
+    bool ZuiIsPowerOfTwo(const size_t n)
+    {
+        return n > 0 && (n & (n - 1)) == 0;
+    }
+
+    const char *ZuiGetWidgetType(const ZuiItemType type)
+    {
+        switch (type)
+        {
+        case ZUI_FRAME:
+            return "frame";
+        case ZUI_LABEL:
+            return "label";
+        case ZUI_TEXTURE:
+            return "texture";
+        case ZUI_NUMERIC_INPUT:
+            return "numerical input";
+        case ZUI_BUTTON:
+            return "button";
+        case ZUI_SLIDER:
+            return "slider";
+        case ZUI_KNOB:
+            return "knob";
+        default:
+            return "unknown";
+        }
+    }
+
+    const char *ZuiResultToString(const ZuiResult result)
+    {
+        switch (result)
+        {
+        case ZUI_OK:
+            return "Success";
+        case ZUI_ERROR_NULL_POINTER:
+            return "NULL pointer argument";
+        case ZUI_ERROR_NULL_CONTEXT:
+            return "Global context is NULL";
+        case ZUI_ERROR_NULL_ARENA:
+            return "Arena pointer is NULL";
+        case ZUI_ERROR_OUT_OF_MEMORY:
+            return "Out of memory";
+        case ZUI_ERROR_ARENA_EXHAUSTED:
+            return "Arena exhausted";
+        case ZUI_ERROR_ALLOCATION_FAILED:
+            return "Allocation failed";
+        case ZUI_ERROR_INVALID_CAPACITY:
+            return "Invalid capacity";
+        case ZUI_ERROR_INVALID_ALIGNMENT:
+            return "Invalid alignment (must be power of 2)";
+        case ZUI_ERROR_INVALID_ID:
+            return "Invalid ID";
+        case ZUI_ERROR_INVALID_BOUNDS:
+            return "Invalid bounds (negative dimensions)";
+        case ZUI_ERROR_INVALID_VALUE:
+            return "Invalid parameter value";
+        case ZUI_ERROR_INVALID_ENUM:
+            return "Invalid enum value";
+        case ZUI_ERROR_INVALID_STATE:
+            return "Invalid object state";
+        case ZUI_ERROR_OVERFLOW:
+            return "Integer overflow";
+        case ZUI_ERROR_OUT_OF_BOUNDS:
+            return "Array index out of bounds";
+        case ZUI_ERROR_NOT_INITIALIZED:
+            return "Not initialized";
+        case ZUI_ERROR_ALREADY_INITIALIZED:
+            return "Already initialized";
+        case ZUI_ERROR_INVALID_INTERNAL_STATE:
+            return "Invalid internal state";
+        case ZUI_ERROR_FONT_LOAD_FAILED:
+            return "Font load failed";
+        case ZUI_ERROR_TEXTURE_LOAD_FAILED:
+            return "Texture load failed";
+        case ZUI_ERROR_RESOURCE_NOT_FOUND:
+            return "Resource not found";
+        case ZUI_ERROR_OPERATION_FAILED:
+            return "Operation failed";
+        case ZUI_ERROR_CIRCULAR_REFERENCE:
+            return "Circular reference detected";
+        case ZUI_ERROR_ITEM_NOT_FOUND:
+            return "Item not found";
+        case ZUI_ERROR_BUFFER_TOO_SMALL:
+            return "Buffer too small";
+        case ZUI_ERROR_INTERNAL_ERROR:
+            return "Internal error";
+        case ZUI_ERROR_NOT_IMPLEMENTED:
+            return "Not implemented";
+        default:
+            return "Unknown error code";
+        }
+    }
+
+    float ZuiPixelsToRoundness(const Rectangle rect, float radius_px)
+    {
+        const float min_dim = fminf(rect.width, rect.height);
+        if (min_dim <= 0.0F)
+        {
+            return 0.0F;
+        }
+        const float max_radius = min_dim * 0.5F;
+        radius_px = fmaxf(0.0F, fminf(radius_px, max_radius));
+        return radius_px / max_radius;
+    }
+
+    size_t ZuiStrlen(const char *s, size_t max_len)
+    {
+        if (!s)
+        {
+            return 0;
+        }
+
+        const char *end = s;
+        while (*end && max_len > 0)
+        {
+            end++;
+            max_len--;
+        }
+
+        return (size_t)(end - s);
+    }
+
+    bool ZuiValidateBounds(const Rectangle bounds)
+    {
+        if (bounds.width < 0 || bounds.height < 0)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_VALUE, "Bounds have negative dimensions");
+            return false;
+        }
+        return true;
+    }
+    // -----------------------------------------------------------------------------
+    // zui_arena.c
     ///------------------------------------------------------------Arena
 
     ZuiResult ZuiInitArena(ZuiArena *arena, const size_t capacity)
@@ -1074,758 +1508,8 @@ extern "C"
         TraceLog(LOG_INFO, "ZUI: Arena: %.2F%% used (%zu / %zu bytes)",
                  (double)stats.usagePercent, stats.usedBytes, stats.totalCapacity);
     }
-// -----------------------------------------------------------------------------
-// zui_context.c
-#include "raylib.h"
-
-    ZuiContext *g_zui_ctx = NULL;
-    ZuiArena g_zui_arena = {0};
-
-    // ----------------------------------------------------------------------------Context
-
-    bool ZuiIsInitialized(void)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "ZUI context not initialized - call ZuiInit() first");
-            return false;
-        }
-        return true;
-    }
-
-    ZuiContext *ZuiGetContext(void)
-    {
-        ZUI_ASSERT(g_zui_ctx != NULL, "ZUI context not initialized - call ZuiInit() first");
-
-        if (g_zui_ctx == NULL)
-        {
-            return NULL;
-        }
-
-        return g_zui_ctx;
-    }
-
-    bool ZuiInit(void)
-    {
-        if (g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_ALREADY_INITIALIZED, "ZUI context already exists");
-            return false;
-        }
-
-        // Initialize global arena with 1MB - intentional large allocation for memory pool
-        // This is a one-time allocation that serves as backing memory for all UI elements
-        ZuiResult result = ZuiInitArena(&g_zui_arena, ZUI_DEFAULT_ARENA_SIZE);
-        if (result != ZUI_OK)
-        {
-            TraceLog(LOG_ERROR, "ZUI: Arena initialization failed");
-            ZuiUnloadArena(&g_zui_arena);
-            g_zui_ctx = NULL;
-            return false;
-        }
-
-        ZuiContext *ctx = ZuiAllocArenaDefault(&g_zui_arena, sizeof(ZuiContext));
-        if (!ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_MEMORY, "Failed to allocate ZuiContext");
-            ZuiUnloadArena(&g_zui_arena);
-            return false;
-        }
-
-        *ctx = (ZuiContext){0};
-        g_zui_ctx = ctx;
-
-        result = ZuiInitDynArray(&ctx->items, &g_zui_arena, ZUI_FRAMES_CAPACITY * 4,
-                                 sizeof(ZuiItem), ZUI_ALIGNOF(ZuiItem), "Items");
-        if (result != ZUI_OK)
-        {
-            TraceLog(LOG_ERROR, "ZUI: Failed to initialize items array");
-            ZuiUnloadArena(&g_zui_arena);
-            g_zui_ctx = NULL;
-            return false;
-        }
-
-        result = ZuiInitDynArray(&ctx->frameData, &g_zui_arena, ZUI_FRAMES_CAPACITY,
-                                 sizeof(ZuiFrameData), ZUI_ALIGNOF(ZuiFrameData), "FrameData");
-        if (result != ZUI_OK)
-        {
-            TraceLog(LOG_ERROR, "ZUI: Failed to initialize frameData array");
-            ZuiUnloadArena(&g_zui_arena);
-            g_zui_ctx = NULL;
-            return false;
-        }
-
-        result = ZuiInitDynArray(&ctx->labelData, &g_zui_arena, ZUI_LABELS_CAPACITY,
-                                 sizeof(ZuiLabelData), ZUI_ALIGNOF(ZuiLabelData), "LabelData");
-        if (result != ZUI_OK)
-        {
-            TraceLog(LOG_ERROR, "ZUI: Failed to initialize labelData array");
-            ZuiUnloadArena(&g_zui_arena);
-            g_zui_ctx = NULL;
-            return false;
-        }
-
-        result = ZuiInitDynArray(&ctx->textureData, &g_zui_arena, ZUI_TEXTURES_CAPACITY,
-                                 sizeof(ZuiTextureData), ZUI_ALIGNOF(ZuiTextureData), "TextureData");
-        if (result != ZUI_OK)
-        {
-            TraceLog(LOG_ERROR, "ZUI: Failed to initialize textureData array");
-            ZuiUnloadArena(&g_zui_arena);
-            g_zui_ctx = NULL;
-            return false;
-        }
-
-        g_zui_ctx->cursor = (ZuiCursor){0};
-
-        int screen_width = GetScreenWidth();
-        int screen_height = GetScreenHeight();
-
-        if (screen_width <= 0 || screen_height <= 0)
-        {
-            TraceLog(LOG_WARNING, "ZUI: Invalid screen dimensions, using defaults");
-            screen_width = ZUI_DEFAULT_SCREEN_WIDTH;
-            screen_height = ZUI_DEFAULT_SCREEN_HEIGHT;
-        }
-
-        // Create root frame
-        unsigned int root_item = ZuiCreateRootFrame(
-            (Rectangle){0, 0, (float)screen_width, (float)screen_height}, BLANK);
-
-        if (root_item == ZUI_ID_INVALID)
-        {
-            TraceLog(LOG_ERROR, "ZUI: Failed to create root frame");
-            ZuiUnloadArena(&g_zui_arena);
-            g_zui_ctx = NULL;
-            return false;
-        }
-
-        ZuiFrameData *root = ZuiGetFrameDataMut(root_item);
-        if (!root)
-        {
-            TraceLog(LOG_ERROR, "ZUI: Failed to get root frame data");
-            ZuiUnloadArena(&g_zui_arena);
-            g_zui_ctx = NULL;
-            return false;
-        }
-
-        g_zui_ctx->cursor.position = (Vector2){root->padding, root->padding};
-        g_zui_ctx->cursor.restPosition = g_zui_ctx->cursor.position;
-        g_zui_ctx->cursor.activeFrame = root_item;
-        g_zui_ctx->cursor.rootItem = root_item;
-
-        Vector2 dpiScale = GetWindowScaleDPI();
-        g_zui_ctx->dpiScale = (int)dpiScale.x;
-        if (g_zui_ctx->dpiScale <= 0)
-        {
-            g_zui_ctx->dpiScale = ZUI_DEFAULT_DPI_SCALE;
-        }
-
-        g_zui_ctx->font = LoadFontEx("src/resources/Inter_18pt-Regular.ttf",
-                                     ZUI_BASE_FONT_SIZE * g_zui_ctx->dpiScale, 0, 0);
-        if (g_zui_ctx->font.texture.id == 0)
-        {
-            g_zui_ctx->font = GetFontDefault();
-        }
-
-        g_zui_ctx->monoFont = LoadFontEx("src/resources/Inconsolata-Regular.ttf",
-                                         ZUI_BASE_FONT_SIZE * g_zui_ctx->dpiScale, 0, 0);
-        if (g_zui_ctx->monoFont.texture.id == 0)
-        {
-            g_zui_ctx->monoFont = GetFontDefault();
-        }
-
-        TraceLog(LOG_INFO, "ZUI: Initialized successfully");
-        return true;
-    }
-
-    void ZuiUpdate(void)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Context not initialized");
-            return;
-        }
-
-        ZuiItem *root = ZuiGetItemMut(g_zui_ctx->cursor.rootItem);
-        if (root && root->updateFunction)
-        {
-            root->updateFunction(root->dataIndex);
-        }
-    }
-
-    void ZuiRender(void)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Context not initialized");
-            return;
-        }
-
-        ZuiItem *root = ZuiGetItemMut(g_zui_ctx->cursor.rootItem);
-        if (root && root->renderFunction)
-        {
-            root->renderFunction(root->dataIndex);
-        }
-    }
-
-    void ZuiExit(void)
-    {
-        if (!ZuiIsInitialized())
-        {
-            return;
-        }
-
-        UnloadFont(g_zui_ctx->font);
-        UnloadFont(g_zui_ctx->monoFont);
-
-#ifdef ZUI_DEBUG
-        ZuiPrintArenaStats(&g_zui_arena);
-#endif
-
-        if (g_zui_arena.buffer != NULL)
-        {
-            ZuiUnloadArena(&g_zui_arena);
-        }
-
-        g_zui_ctx = NULL;
-    }
-
-    void ZuiAdvanceCursor(const float width, const float height)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return;
-        }
-
-        if (width < 0.0F || height < 0.0F)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_VALUE, "Negative dimensions");
-            return;
-        }
-
-        const ZuiFrameData *activeFrameData = ZuiGetFrameData(g_zui_ctx->cursor.activeFrame);
-        if (!activeFrameData)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_ID, "Invalid active frame");
-            return;
-        }
-
-        Vector2 size = (Vector2){width, height};
-        if (g_zui_ctx->cursor.isRow)
-        {
-            g_zui_ctx->cursor.position.x += size.x + activeFrameData->gap;
-        }
-        else
-        {
-            g_zui_ctx->cursor.position.x = g_zui_ctx->cursor.restPosition.x;
-            g_zui_ctx->cursor.tempRestPosition.x = g_zui_ctx->cursor.position.x;
-            g_zui_ctx->cursor.position.y += size.y + activeFrameData->gap;
-        }
-    }
-
-    void ZuiPrintCursor(void)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return;
-        }
-
-        TraceLog(LOG_INFO, "[ZUI] Cursor position: x=%.1F, y=%.1F, activeFrame=%u",
-                 (double)g_zui_ctx->cursor.position.x,
-                 (double)g_zui_ctx->cursor.position.y,
-                 g_zui_ctx->cursor.activeFrame);
-    }
-
-    void ZuiAdvanceLine(void)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return;
-        }
-
-        const ZuiFrameData *activeFrameData = ZuiGetFrameData(g_zui_ctx->cursor.activeFrame);
-        if (!activeFrameData)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_ID, "Invalid active frame");
-            return;
-        }
-
-        // Advance to next line
-        g_zui_ctx->cursor.position.x = g_zui_ctx->cursor.restPosition.x;
-        g_zui_ctx->cursor.tempRestPosition.x = g_zui_ctx->cursor.position.x;
-        g_zui_ctx->cursor.position.y += g_zui_ctx->cursor.lastItemBounds.height + activeFrameData->gap;
-        g_zui_ctx->cursor.tempRestPosition.y = g_zui_ctx->cursor.position.y;
-    }
-
-    void ZuiPlaceAt(const float x, const float y)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return;
-        }
-
-        g_zui_ctx->cursor.position = (Vector2){x, y};
-        g_zui_ctx->cursor.tempRestPosition = g_zui_ctx->cursor.position;
-    }
-
-    void ZuiOffset(const float x, const float y)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return;
-        }
-
-        g_zui_ctx->cursor.position.x += x;
-        g_zui_ctx->cursor.position.y += y;
-        g_zui_ctx->cursor.tempRestPosition = g_zui_ctx->cursor.position;
-    }
     // -----------------------------------------------------------------------------
-
-#include "math.h"
-#include "raylib.h"
-
-    ///------------------------------------------------------------Internal Utility Functions
-
-    bool ZuiIsPowerOfTwo(const size_t n)
-    {
-        return n > 0 && (n & (n - 1)) == 0;
-    }
-
-    const char *ZuiGetWidgetType(const ZuiItemType type)
-    {
-        switch (type)
-        {
-        case ZUI_FRAME:
-            return "frame";
-        case ZUI_LABEL:
-            return "label";
-        case ZUI_TEXTURE:
-            return "texture";
-        case ZUI_HORIZONTAL_3PATCH_TEXTURE:
-            return "horizontal 3patch texture";
-        case ZUI_VERTICAL_3PATCH_TEXTURE:
-            return "vertical 3patch texture";
-        case ZUI_9SLICE_TEXTURE:
-            return "9 slice texture";
-        case ZUI_NUMERIC_INPUT:
-            return "numerical input";
-        case ZUI_BUTTON:
-            return "button";
-        case ZUI_SLIDER:
-            return "slider";
-        case ZUI_KNOB:
-            return "knob";
-        default:
-            return "unknown";
-        }
-    }
-
-    const char *ZuiResultToString(const ZuiResult result)
-    {
-        switch (result)
-        {
-        case ZUI_OK:
-            return "Success";
-        case ZUI_ERROR_NULL_POINTER:
-            return "NULL pointer argument";
-        case ZUI_ERROR_NULL_CONTEXT:
-            return "Global context is NULL";
-        case ZUI_ERROR_NULL_ARENA:
-            return "Arena pointer is NULL";
-        case ZUI_ERROR_OUT_OF_MEMORY:
-            return "Out of memory";
-        case ZUI_ERROR_ARENA_EXHAUSTED:
-            return "Arena exhausted";
-        case ZUI_ERROR_ALLOCATION_FAILED:
-            return "Allocation failed";
-        case ZUI_ERROR_INVALID_CAPACITY:
-            return "Invalid capacity";
-        case ZUI_ERROR_INVALID_ALIGNMENT:
-            return "Invalid alignment (must be power of 2)";
-        case ZUI_ERROR_INVALID_ID:
-            return "Invalid ID";
-        case ZUI_ERROR_INVALID_BOUNDS:
-            return "Invalid bounds (negative dimensions)";
-        case ZUI_ERROR_INVALID_VALUE:
-            return "Invalid parameter value";
-        case ZUI_ERROR_INVALID_ENUM:
-            return "Invalid enum value";
-        case ZUI_ERROR_INVALID_STATE:
-            return "Invalid object state";
-        case ZUI_ERROR_OVERFLOW:
-            return "Integer overflow";
-        case ZUI_ERROR_OUT_OF_BOUNDS:
-            return "Array index out of bounds";
-        case ZUI_ERROR_NOT_INITIALIZED:
-            return "Not initialized";
-        case ZUI_ERROR_ALREADY_INITIALIZED:
-            return "Already initialized";
-        case ZUI_ERROR_INVALID_INTERNAL_STATE:
-            return "Invalid internal state";
-        case ZUI_ERROR_FONT_LOAD_FAILED:
-            return "Font load failed";
-        case ZUI_ERROR_TEXTURE_LOAD_FAILED:
-            return "Texture load failed";
-        case ZUI_ERROR_RESOURCE_NOT_FOUND:
-            return "Resource not found";
-        case ZUI_ERROR_OPERATION_FAILED:
-            return "Operation failed";
-        case ZUI_ERROR_CIRCULAR_REFERENCE:
-            return "Circular reference detected";
-        case ZUI_ERROR_ITEM_NOT_FOUND:
-            return "Item not found";
-        case ZUI_ERROR_BUFFER_TOO_SMALL:
-            return "Buffer too small";
-        case ZUI_ERROR_INTERNAL_ERROR:
-            return "Internal error";
-        case ZUI_ERROR_NOT_IMPLEMENTED:
-            return "Not implemented";
-        default:
-            return "Unknown error code";
-        }
-    }
-
-    float ZuiPixelsToRoundness(const Rectangle rect, float radius_px)
-    {
-        const float min_dimension = rect.width < rect.height ? rect.width : rect.height;
-
-        // Handle zero dimension to avoid division by zero
-        if (min_dimension <= 0.0F)
-        {
-            return 0.0F;
-        }
-
-        const float max_radius = min_dimension * 0.5F;
-
-        // Clamp radius so it never exceeds half the shortest side
-        if (radius_px < 0.0F)
-        {
-            radius_px = 0.0F;
-        }
-
-        if (radius_px > max_radius)
-        {
-            radius_px = max_radius;
-        }
-
-        return radius_px / max_radius;
-    }
-
-    //-------------------------------------------------------------Option Preset
-
-    ZuiOptionInt ZuiSomeInt(const int v)
-    {
-        return (ZuiOptionInt){.has = true, .value = v};
-    }
-
-    bool ZuiHasInt(ZuiOptionInt const o)
-    {
-        return o.has;
-    }
-
-    ZuiOptionColor ZuiSomeColor(const Color v)
-    {
-        return (ZuiOptionColor){.has = true, .value = v};
-    }
-
-    bool ZuiHasColor(ZuiOptionColor const o)
-    {
-        return o.has;
-    }
-
-    ZuiOptionString ZuiSomeString(const char *v)
-    {
-        return (ZuiOptionString){.has = true, .value = v};
-    }
-
-    bool ZuiHasString(ZuiOptionString const o)
-    {
-        return o.has;
-    }
-
-    ZuiOptionVector2 ZuiSomeVector2(const Vector2 v)
-    {
-        return (ZuiOptionVector2){.has = true, .value = v};
-    }
-
-    bool ZuiHasVector2(ZuiOptionVector2 const o)
-    {
-        return o.has;
-    }
-
-    ZuiOptionNPatchInfo ZuiSomeNPatchInfo(const NPatchInfo v)
-    {
-        return (ZuiOptionNPatchInfo){.has = true, .value = v};
-    }
-
-    bool ZuiHasNPatchInfo(ZuiOptionNPatchInfo const o)
-    {
-        return o.has;
-    }
-
-    ZuiOptionTexture2D ZuiSomeTexture2D(const Texture2D v)
-    {
-        return (ZuiOptionTexture2D){.has = true, .value = v};
-    }
-
-    bool ZuiHasTexture2D(ZuiOptionTexture2D const o)
-    {
-        return o.has;
-    }
-
-    ZuiOptionRectangle ZuiSomeRectangle(const Rectangle v)
-    {
-        return (ZuiOptionRectangle){.has = true, .value = v};
-    }
-
-    bool ZuiHasRectangle(ZuiOptionRectangle const o)
-    {
-        return o.has;
-    }
-
-    ZuiOptionFloat ZuiSomeFloat(const float v)
-    {
-        return (ZuiOptionFloat){.has = true, .value = v};
-    }
-
-    bool ZuiHasFloat(ZuiOptionFloat const o)
-    {
-        return o.has;
-    }
-
-    ZuiOptionFont ZuiSomeFont(const Font v)
-    {
-        return (ZuiOptionFont){.has = true, .value = v};
-    }
-
-    bool ZuiHasFont(ZuiOptionFont const o)
-    {
-        return o.has;
-    }
-
-    typedef ZuiOptionInt ZuiOptionAlignment;
-    typedef ZuiOptionInt ZuiOptionPlacement;
-    typedef ZuiOptionInt ZuiOptionBool;
-
-#define ZUI_SOME_EVAL(x) _Generic((x), \
-    int: ZuiSomeInt,                   \
-    float: ZuiSomeFloat,               \
-    char *: ZuiSomeString,             \
-    const char *: ZuiSomeString,       \
-    Color: ZuiSomeColor,               \
-    Vector2: ZuiSomeVector2,           \
-    Rectangle: ZuiSomeRectangle,       \
-    Texture2D: ZuiSomeTexture2D,       \
-    NPatchInfo: ZuiSomeNPatchInfo,     \
-    Font: ZuiSomeFont)(x)
-
-// Main macro - the extra () forces expansion before _Generic
-#define zui_some(...) ZUI_SOME_EVAL((__VA_ARGS__))
-
-#define zui_has(...) _Generic(__VA_ARGS__, \
-    ZuiOptionInt: ZuiHasInt,               \
-    ZuiOptionFloat: ZuiHasFloat,           \
-    ZuiOptionString: ZuiHasString,         \
-    ZuiOptionColor: ZuiHasColor,           \
-    ZuiOptionVector2: ZuiHasVector2,       \
-    ZuiOptionRectangle: ZuiHasRectangle,   \
-    ZuiOptionTexture2D: ZuiHasTexture2D,   \
-    ZuiOptionNPatchInfo: ZuiHasNPatchInfo, \
-    ZuiOptionFont: ZuiHasFont)(__VA_ARGS__)
-
-    //-------------------------------------------------Property
-
-    bool ZuiValidatePropertyPointer(const ZuiProperty *prop)
-    {
-
-        if (prop == NULL)
-        {
-            TraceLog(LOG_INFO, "ZUI INFO: Property pointer is NULL\n");
-            return false;
-        }
-        return true;
-    }
-
-    float ZuiGetPropertyValueAsFloat(const ZuiProperty *prop)
-    {
-
-        if (!ZuiValidatePropertyPointer(prop))
-        {
-            return 0.0F;
-        }
-
-        switch (prop->type)
-        {
-        case ZUI_INT:
-            return (float)prop->asInt.value;
-        case ZUI_FLOAT:
-            return prop->asFloat.value;
-        default:
-            // Handle unexpected types - return 0.0f or use assert/fallback
-            ZUI_ASSERT(false, "ZUI ERROR: Unsupported property type");
-            return 0.0F;
-        }
-    }
-
-    float ZuiGetPropertyMinAsFloat(const ZuiProperty *prop)
-    {
-        if (!ZuiValidatePropertyPointer(prop))
-        {
-            return 0.0F;
-        }
-
-        switch (prop->type)
-        {
-        case ZUI_INT:
-            return (float)prop->asInt.minValue;
-        case ZUI_FLOAT:
-            return prop->asFloat.minValue;
-        default:
-            // Handle unexpected types - return 0.0f or use assert/fallback
-            ZUI_ASSERT(false, "ZUI ERROR: Unsupported property type");
-            return 0.0F;
-        }
-    }
-
-    float ZuiGetPropertyMaxAsFloat(const ZuiProperty *prop)
-    {
-        if (!ZuiValidatePropertyPointer(prop))
-        {
-            return 0.0F;
-        }
-
-        switch (prop->type)
-        {
-        case ZUI_INT:
-            return (float)prop->asInt.maxValue;
-        case ZUI_FLOAT:
-            return prop->asFloat.maxValue;
-        default:
-            // Handle unexpected types - return 0.0f or use assert/fallback
-            ZUI_ASSERT(false, "ZUI ERROR: Unsupported property type");
-            return 0.0F;
-        }
-    }
-
-    float ZuiGetPropertyStepAsFloat(const ZuiProperty *prop)
-    {
-        if (!ZuiValidatePropertyPointer(prop))
-        {
-            return 0.0F;
-        }
-
-        switch (prop->type)
-        {
-        case ZUI_INT:
-            return (float)prop->asInt.step;
-        case ZUI_FLOAT:
-            return prop->asFloat.step;
-        default:
-            // Handle unexpected types - return 0.0f or use assert/fallback
-            ZUI_ASSERT(false, "ZUI ERROR: Unsupported property type");
-            return 0.0F;
-        }
-    }
-
-    bool ZuiGetPropertyHasMinMax(const ZuiProperty *prop)
-    {
-        if (!ZuiValidatePropertyPointer(prop))
-        {
-            return false;
-        }
-
-        switch (prop->type)
-        {
-        case ZUI_INT:
-            // NOLINTNEXTLINE(bugprone-narrowing-conversions, cppcoreguidelines-narrowing-conversions)
-            return prop->asInt.hasMinMax;
-        case ZUI_FLOAT:
-            // NOLINTNEXTLINE(bugprone-narrowing-conversions, cppcoreguidelines-narrowing-conversions)
-            return prop->asFloat.hasMinMax;
-        default:
-            // Handle unexpected types - return 0.0f or use assert/fallback
-            ZUI_ASSERT(false, "ZUI ERROR: Unsupported property type");
-            return false;
-        }
-    }
-
-    bool ZuiGetPropertyHasStep(const ZuiProperty *prop)
-    {
-        if (!ZuiValidatePropertyPointer(prop))
-        {
-            return false;
-        }
-
-        switch (prop->type)
-        {
-        case ZUI_INT:
-            // NOLINTNEXTLINE(bugprone-narrowing-conversions, cppcoreguidelines-narrowing-conversions)
-            return prop->asInt.hasStep;
-        case ZUI_FLOAT:
-            // NOLINTNEXTLINE(bugprone-narrowing-conversions, cppcoreguidelines-narrowing-conversions)
-            return prop->asFloat.hasStep;
-        default:
-            // Handle unexpected types - return 0.0f or use assert/fallback
-            ZUI_ASSERT(false, "ZUI ERROR: Unsupported property type");
-            return false;
-        }
-    }
-
-    void ZuiSetPropertyValueFromFloat(ZuiProperty *prop, float value)
-    {
-        if (!ZuiValidatePropertyPointer(prop))
-        {
-            return;
-        }
-
-        switch (prop->type)
-        {
-        case ZUI_INT:
-            prop->asInt.value = (int)roundf(value);
-            break;
-        case ZUI_FLOAT:
-            prop->asFloat.value = value;
-            break;
-        default:
-            return;
-        }
-    }
-
-    size_t ZuiStrlen(const char *s, size_t max_len)
-    {
-        if (!s)
-        {
-            return 0;
-        }
-
-        const char *end = s;
-        while (*end && max_len > 0)
-        {
-            end++;
-            max_len--;
-        }
-
-        return (size_t)(end - s);
-    }
-
-    bool ZuiValidateBounds(const Rectangle bounds)
-    {
-        if (bounds.width < 0 || bounds.height < 0)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_VALUE, "Bounds have negative dimensions");
-            return false;
-        }
-        return true;
-    }
-// -----------------------------------------------------------------------------
-// zui_dynarray.c
-#include "raylib.h"
-
+    // zui_dynarray.c
     ///------------------------------------------------------------Dynamic Array
 
     bool ZuiIsDynArrayValid(const ZuiDynArray *array)
@@ -1983,13 +1667,15 @@ extern "C"
             current_bytes = (size_t)array->count * array->itemSize;
         }
 
-        TraceLog(LOG_INFO, "ZUI: Growing dynarray from %u to %u capacity (%zu to %zu bytes)",
+        TraceLog(LOG_INFO, "ZUI: Growing dynarray '%s' from %u to %u capacity (%zu to %zu bytes)",
+                 array->typeName ? array->typeName : "unknown",
                  array->capacity, new_capacity, current_bytes, new_bytes);
 
         void *new_items = ZuiAllocArena(arena, new_bytes, _Alignof(max_align_t));
         if (!new_items)
         {
-            TraceLog(LOG_ERROR, "ZUI: Failed to allocate memory for dynarray growth");
+            TraceLog(LOG_ERROR, "ZUI: Failed to allocate %zu bytes from arena for %s array growth",
+                     new_bytes, array->typeName);
             return ZUI_ERROR_OUT_OF_MEMORY;
         }
 
@@ -2007,38 +1693,45 @@ extern "C"
 
     void *ZuiPushDynArray(ZuiDynArray *array, ZuiArena *arena)
     {
-        if (!array)
+        if (!array || !arena)
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_POINTER,
-                             "Dynamic array pointer is NULL ");
-            return NULL;
-        }
-
-        if (!arena)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_POINTER,
-                             "Arena pointer is NULL");
             return NULL;
         }
 
         if (!ZuiIsDynArrayValid(array))
         {
-            TraceLog(LOG_ERROR, "ZUI: Dynamic array is in invalid state");
             return NULL;
         }
 
+        // ⚠️ CRITICAL: Add this bounds check BEFORE allocating
         if (array->count >= array->capacity)
         {
             ZuiResult result = ZuiGrowDynArray(array, arena);
             if (result != ZUI_OK)
             {
-                TraceLog(LOG_ERROR, "ZUI: Failed to grow %s array: %s",
-                         array->typeName, ZuiResultToString(result));
                 return NULL;
             }
         }
 
+        // ⚠️ CRITICAL: Add this overflow check
         size_t byte_offset = array->itemSize * array->count;
+
+        // Check for multiplication overflow
+        if (array->count > 0 && byte_offset < array->itemSize)
+        {
+            TraceLog(LOG_ERROR, "ZUI: Multiplication overflow in PushDynArray: %u * %zu = %zu",
+                     array->count, array->itemSize, byte_offset);
+            return NULL;
+        }
+
+        // Check if offset is within bounds
+        if (byte_offset >= array->capacity * array->itemSize)
+        {
+            TraceLog(LOG_ERROR, "ZUI: Byte offset %zu exceeds allocated size %zu",
+                     byte_offset, array->capacity * array->itemSize);
+            return NULL;
+        }
+
         void *slot = (char *)array->items + byte_offset;
         array->count++;
         return slot;
@@ -2118,354 +1811,1525 @@ extern "C"
                  array->typeName, (double)stats.usagePercent,
                  stats.count, stats.capacity, stats.memoryUsed);
     }
-// -----------------------------------------------------------------------------
-// zui_frame.c
-#include "raylib.h"
+    // -----------------------------------------------------------------------------
+    // zui_component.c - Unified Component System Implementation
+    // #include "raymath.h"
 
-    const ZuiFrameData *ZuiGetFrameData(const unsigned int itemId)
+    //-------------------------------------- COMPONENT INITIALIZATION FUNCTIONS
+
+    static void ZuiInitTransform(void *data, unsigned int itemId)
     {
-        const ZuiItem *item = ZuiGetItem(itemId);
-        if (!item || item->type != ZUI_FRAME)
-        {
-            return NULL;
-        }
-
-        unsigned int dataIndex = (unsigned int)(uintptr_t)item->dataIndex;
-        return (ZuiFrameData *)ZuiGetDynArray(&g_zui_ctx->frameData, dataIndex);
+        ZuiTransform *t = (ZuiTransform *)data;
+        *t = (ZuiTransform){
+            .itemId = itemId,
+            .bounds = (Rectangle){0, 0, 0, 0},
+            .offset = (Vector2){0, 0},
+            .isDirty = false};
     }
 
-    ZuiFrameData *ZuiGetFrameDataMut(const unsigned int itemId)
+    static void ZuiInitLayout(void *data, unsigned int itemId)
     {
-        const ZuiItem *item = ZuiGetItem(itemId);
-        if (!item || item->type != ZUI_FRAME)
-        {
-            return NULL;
-        }
-
-        unsigned int dataIndex = (unsigned int)(uintptr_t)item->dataIndex;
-        return (ZuiFrameData *)ZuiGetDynArray(&g_zui_ctx->frameData, dataIndex);
-    }
-
-    unsigned int ZuiCreateRootFrame(const Rectangle bounds, const Color color)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return ZUI_ID_INVALID;
-        }
-
-        if (!ZuiValidateBounds(bounds))
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_BOUNDS, "Invalid bounds");
-            return ZUI_ID_INVALID;
-        }
-
-        ZuiFrameData *frameData =
-            (ZuiFrameData *)ZuiPushDynArray(&g_zui_ctx->frameData, &g_zui_arena);
-        if (!frameData)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_MEMORY, "Failed to allocate frame data");
-            return ZUI_ID_INVALID;
-        }
-
-        unsigned int dataIndex = g_zui_ctx->frameData.count - 1;
-
-        unsigned int item_id = ZuiCreateItem(ZUI_FRAME, dataIndex);
-        if (item_id == ZUI_ID_INVALID)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_MEMORY, "Failed to create item");
-            return ZUI_ID_INVALID;
-        }
-
-        *frameData = (ZuiFrameData){
-            .itemId = item_id,
-            .bounds = bounds,
-            .backgroundColor = color,
-            .hasBackground = (color.a > 0),
+        ZuiLayoutData *l = (ZuiLayoutData *)data;
+        *l = (ZuiLayoutData){
+            .itemId = itemId,
+            .kind = ZUI_LAYOUT_NONE,
+            .spacing = ZUI_DEFAULT_FRAME_GAP,
             .padding = ZUI_DEFAULT_FRAME_PADDING,
-            .gap = ZUI_DEFAULT_FRAME_GAP,
-            .hasOutline = false,
-            .outlineThickness = 0.0F,
-            .outlineColor = BLACK,
-        };
+            .gridColumns = 3,
+            .childAlignX = ZUI_ALIGN_X_LEFT,
+            .childAlignY = ZUI_ALIGN_Y_TOP,
+            .justify = ZUI_JUSTIFY_START,
+            .measuredWidth = 0,
+            .measuredHeight = 0};
+    }
 
-        ZuiItem *item = ZuiGetItemMut(item_id);
-        if (!item)
+    static void ZuiInitAlign(void *data, unsigned int itemId)
+    {
+        ZuiAlignData *a = (ZuiAlignData *)data;
+        *a = (ZuiAlignData){
+            .itemId = itemId,
+            .overrideX = false,
+            .overrideY = false,
+            .alignX = ZUI_ALIGN_X_LEFT,
+            .alignY = ZUI_ALIGN_Y_TOP,
+            .widthMode = ZUI_SIZE_HUG,
+            .heightMode = ZUI_SIZE_HUG,
+            .fixedWidth = 0,
+            .fixedHeight = 0};
+    }
+
+    static void ZuiInitInteraction(void *data, unsigned int itemId)
+    {
+        ZuiInteractionData *i = (ZuiInteractionData *)data;
+        *i = (ZuiInteractionData){
+            .itemId = itemId,
+            .isHovered = false,
+            .wasHovered = false,
+            .isPressed = false,
+            .wasPressed = false,
+            .isFocused = false,
+            .wasFocused = false,
+            .mousePosition = (Vector2){0, 0},
+            .mouseDelta = (Vector2){0, 0},
+            .pressedButton = ZUI_MOUSE_LEFT,
+            .hoverTime = 0,
+            .pressTime = 0,
+            .capturesMouse = true,
+            .capturesKeyboard = false,
+            .acceptsFocus = true,
+            .blocksInput = false,
+            .onHoverEnter = NULL,
+            .onHoverExit = NULL,
+            .onClick = NULL,
+            .onPress = NULL,
+            .onRelease = NULL,
+            .onFocus = NULL,
+            .onBlur = NULL};
+    }
+
+    static void ZuiInitStyle(void *data, unsigned int itemId)
+    {
+        ZuiStyleData *s = (ZuiStyleData *)data;
+        *s = (ZuiStyleData){
+            .itemId = itemId,
+            .background = (ZuiColorSet){RAYWHITE, LIGHTGRAY, GRAY, SKYBLUE, DARKGRAY},
+            .foreground = (ZuiColorSet){BLACK, BLACK, BLACK, BLACK, GRAY},
+            .border = (ZuiColorSet){BLACK, BLACK, BLACK, BLACK, GRAY},
+            .borderNormal = (ZuiBorderStyle){0, 0, BLACK, false},
+            .borderHovered = (ZuiBorderStyle){0, 0, BLACK, false},
+            .borderPressed = (ZuiBorderStyle){0, 0, BLACK, false},
+            .borderFocused = (ZuiBorderStyle){0, 0, BLACK, false},
+            .borderDisabled = (ZuiBorderStyle){0, 0, BLACK, false},
+            .font = GetFontDefault(),
+            .fontSize = 16.0F,
+            .fontSpacing = 1.0F,
+            .textColor = BLACK,
+            .useCustomFont = false,
+            .hasShadow = false,
+            .shadowColor = BLACK,
+            .shadowOffset = (Vector2){0, 0},
+            .shadowBlur = 0,
+            .themeOverride = NULL};
+    }
+
+    static void ZuiInitState(void *data, unsigned int itemId)
+    {
+        ZuiStateData *s = (ZuiStateData *)data;
+        *s = (ZuiStateData){
+            .itemId = itemId,
+            .isEnabled = true,
+            .isVisible = true,
+            .isReadOnly = false,
+            .isSelected = false,
+            .isActive = false,
+            .validationState = ZUI_VALIDATION_NONE,
+            .validationMessage = {0},
+            .isLoading = false,
+            .loadingProgress = 0,
+            .isDirty = false,
+            .needsRedraw = false};
+    }
+
+    static void ZuiInitAnimation(void *data, unsigned int itemId)
+    {
+        ZuiAnimationData *a = (ZuiAnimationData *)data;
+        a->itemId = itemId;
+        a->activeCount = 0;
+
+        for (int i = 0; i < 8; i++)
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_INTERNAL_ERROR, "Failed to get item");
-            return ZUI_ID_INVALID;
+            a->slots[i] = (ZuiAnimation){
+                .value = 0.0F,
+                .target = 0.0F,
+                .velocity = 0.0F,
+                .duration = 0.2F,
+                .elapsed = 0.0F,
+                .active = false,
+                .type = ZUI_ANIM_EASE_OUT,
+                .damping = 0.7F,
+                .stiffness = 300.0F};
+        }
+    }
+
+    static void ZuiInitLayer(void *data, unsigned int itemId)
+    {
+        ZuiLayerData *l = (ZuiLayerData *)data;
+        *l = (ZuiLayerData){
+            .itemId = itemId,
+            .layer = ZUI_LAYER_CONTENT,
+            .order = 0,
+            .blocksInput = false};
+    }
+
+    //-------------------------------------- COMPONENT REGISTRATION
+
+    ZuiResult ZuiInitComponentRegistry(void)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return ZUI_ERROR_NULL_CONTEXT;
         }
 
-        item->renderFunction = ZuiRenderFrame;
-        item->updateFunction = ZuiUpdateFrame;
-        item->isVisible = true;
-        item->isInsideWindow = false;
-        item->hasChildren = true;
-
-        ZuiResult result = ZuiInitDynArray(
-            &item->children,
-            &g_zui_arena,
-            ZUI_FRAMES_CAPACITY,
-            sizeof(unsigned int),
-            _Alignof(unsigned int),
-            "Children");
-
+        ZuiComponentRegistry *reg = &g_zui_ctx->componentRegistry;
+        ZuiResult result = ZuiInitDynArray(&reg->registrations, &g_zui_arena, 16,
+                                           sizeof(ZuiComponentRegistration),
+                                           ZUI_ALIGNOF(ZuiComponentRegistration),
+                                           "ComponentRegistrations");
         if (result != ZUI_OK)
         {
-            ZUI_REPORT_ERROR(result, "Failed to initialize children");
+            ZUI_REPORT_ERROR(result, "Failed to init component registry");
+            return result;
+        }
+
+        reg->nextComponentId = 0;
+
+#ifdef ZUI_DEBUG
+        TraceLog(LOG_INFO, "ZUI: Component registry initialized");
+#endif
+
+        return ZUI_OK;
+    }
+
+    unsigned int ZuiRegisterComponent(const ZuiComponentInfo *info)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return ZUI_ID_INVALID;
+        }
+        if (!info || !info->name)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_POINTER, "ComponentInfo or name is NULL");
+            return ZUI_ID_INVALID;
+        }
+        if (info->dataSize == 0)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_VALUE, "Data size must be > 0");
+            return ZUI_ID_INVALID;
+        }
+        if (!ZuiIsPowerOfTwo(info->dataAlignment))
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_ALIGNMENT, "Data alignment must be power of 2");
             return ZUI_ID_INVALID;
         }
 
-        return item_id;
-    }
-
-    unsigned int ZuiCreateFrame(const Rectangle bounds, const Color color)
-    {
-        return ZuiCreateRootFrame(bounds, color);
-    }
-
-    void ZuiUpdateFrame(unsigned int dataIndex)
-    {
-        if (!g_zui_ctx)
+        ZuiComponentRegistry *reg = &g_zui_ctx->componentRegistry;
+        if (reg->nextComponentId >= ZUI_MAX_COMPONENT_TYPES)
         {
-            return;
+            ZUI_REPORT_ERROR(ZUI_ERROR_OVERFLOW, "Maximum component types reached");
+            return ZUI_ID_INVALID;
         }
 
-        const ZuiFrameData *frameItems = (ZuiFrameData *)g_zui_ctx->frameData.items;
-        const ZuiFrameData *frameData = &frameItems[dataIndex];
-        const ZuiItem *frameItem = ZuiGetItemMut(frameData->itemId);
-        if (!frameItem || !frameItem->hasChildren)
+        // Check for duplicate name
+        for (unsigned int i = 0; i < reg->registrations.count; i++)
         {
-            return;
-        }
-
-        const unsigned int *childIds = (unsigned int *)frameItem->children.items;
-        for (unsigned int i = 0; i < frameItem->children.count; i++)
-        {
-            const ZuiItem *child = ZuiGetItem(childIds[i]);
-            if (child && child->updateFunction)
+            const ZuiComponentRegistration *r = (ZuiComponentRegistration *)ZuiGetDynArray(&reg->registrations, i);
+            if (r && strcmp(r->info.name, info->name) == 0)
             {
-                child->updateFunction(child->dataIndex);
+                ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_VALUE, "Component '%s' already registered", info->name);
+                return ZUI_ID_INVALID;
             }
         }
+
+        ZuiComponentRegistration *newReg = (ZuiComponentRegistration *)ZuiPushDynArray(&reg->registrations, &g_zui_arena);
+        if (!newReg)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_MEMORY, "Failed to allocate component registration");
+            return ZUI_ID_INVALID;
+        }
+
+        newReg->info = *info;
+        newReg->componentId = reg->nextComponentId++;
+
+        const unsigned int capacity = info->initialCapacity > 0 ? info->initialCapacity : 32;
+        ZuiResult result = ZuiInitDynArray(&newReg->dataArray, &g_zui_arena, capacity,
+                                           info->dataSize, info->dataAlignment, info->name);
+        if (result != ZUI_OK)
+        {
+            ZUI_REPORT_ERROR(result, "Failed to init data array for component '%s'", info->name);
+            reg->registrations.count--;
+            return ZUI_ID_INVALID;
+        }
+
+#ifdef ZUI_DEBUG
+        TraceLog(LOG_INFO, "ZUI: Registered component '%s' with ID %u", info->name, newReg->componentId);
+#endif
+
+        return newReg->componentId;
     }
 
-    void ZuiRenderFrame(unsigned int dataIndex)
+    void ZuiRegisterAllComponents(void)
     {
-        if (!g_zui_ctx)
+        // Transform
         {
-            return;
+            static const unsigned int empty[] = {0};
+            ZuiComponentInfo info = {
+                .name = "Transform",
+                .dataSize = sizeof(ZuiTransform),
+                .dataAlignment = ZUI_ALIGNOF(ZuiTransform),
+                .initialCapacity = 64,
+                .init = ZuiInitTransform,
+                .cleanup = NULL,
+                .requiredComponents = empty,
+                .requiredComponentCount = 0};
+            unsigned int id = ZuiRegisterComponent(&info);
+            ZUI_ASSERT(id == ZUI_COMPONENT_TRANSFORM, "Transform component ID mismatch");
         }
 
-        const ZuiFrameData *frameItems = (ZuiFrameData *)g_zui_ctx->frameData.items;
-        const ZuiFrameData *frameData = &frameItems[dataIndex];
-        const ZuiItem *frameItem = ZuiGetItem(frameData->itemId);
-        if (!frameItem)
+        // Layout
         {
-            return;
+            static const unsigned int deps[] = {ZUI_COMPONENT_TRANSFORM};
+            ZuiComponentInfo info = {
+                .name = "Layout",
+                .dataSize = sizeof(ZuiLayoutData),
+                .dataAlignment = ZUI_ALIGNOF(ZuiLayoutData),
+                .initialCapacity = 64,
+                .init = ZuiInitLayout,
+                .cleanup = NULL,
+                .requiredComponents = deps,
+                .requiredComponentCount = 1};
+            unsigned int id = ZuiRegisterComponent(&info);
+            ZUI_ASSERT(id == ZUI_COMPONENT_LAYOUT, "Layout component ID mismatch");
         }
 
-        const float roundness = ZuiPixelsToRoundness(frameData->bounds, ZUI_CORNER_RADIUS);
-
-        if (frameData->hasBackground)
+        // Align
         {
-            DrawRectangleRounded(frameData->bounds, roundness,
-                                 ZUI_ROUNDNESS_SEGMENTS,
-                                 frameData->backgroundColor);
+            static const unsigned int empty[] = {0};
+            ZuiComponentInfo info = {
+                .name = "Align",
+                .dataSize = sizeof(ZuiAlignData),
+                .dataAlignment = ZUI_ALIGNOF(ZuiAlignData),
+                .initialCapacity = 64,
+                .init = ZuiInitAlign,
+                .cleanup = NULL,
+                .requiredComponents = empty,
+                .requiredComponentCount = 0};
+            unsigned int id = ZuiRegisterComponent(&info);
+            ZUI_ASSERT(id == ZUI_COMPONENT_ALIGN, "Align component ID mismatch");
         }
 
-        if (frameData->hasOutline)
+        // Interaction
         {
-            DrawRectangleRoundedLinesEx(frameData->bounds, roundness,
-                                        ZUI_ROUNDNESS_SEGMENTS,
-                                        frameData->outlineThickness,
-                                        frameData->outlineColor);
+            static const unsigned int deps[] = {ZUI_COMPONENT_TRANSFORM};
+            ZuiComponentInfo info = {
+                .name = "Interaction",
+                .dataSize = sizeof(ZuiInteractionData),
+                .dataAlignment = ZUI_ALIGNOF(ZuiInteractionData),
+                .initialCapacity = 64,
+                .init = ZuiInitInteraction,
+                .cleanup = NULL,
+                .requiredComponents = deps,
+                .requiredComponentCount = 1};
+            unsigned int id = ZuiRegisterComponent(&info);
+            ZUI_ASSERT(id == ZUI_COMPONENT_INTERACTION, "Interaction component ID mismatch");
         }
 
-        if (frameItem->hasChildren)
+        // Style
         {
-            const unsigned int *childIds = (unsigned int *)frameItem->children.items;
+            static const unsigned int empty[] = {0};
+            ZuiComponentInfo info = {
+                .name = "Style",
+                .dataSize = sizeof(ZuiStyleData),
+                .dataAlignment = ZUI_ALIGNOF(ZuiStyleData),
+                .initialCapacity = 64,
+                .init = ZuiInitStyle,
+                .cleanup = NULL,
+                .requiredComponents = empty,
+                .requiredComponentCount = 0};
+            unsigned int id = ZuiRegisterComponent(&info);
+            ZUI_ASSERT(id == ZUI_COMPONENT_STYLE, "Style component ID mismatch");
+        }
 
-            for (unsigned int i = 0; i < frameItem->children.count; i++)
+        // State
+        {
+            static const unsigned int empty[] = {0};
+            ZuiComponentInfo info = {
+                .name = "State",
+                .dataSize = sizeof(ZuiStateData),
+                .dataAlignment = ZUI_ALIGNOF(ZuiStateData),
+                .initialCapacity = 64,
+                .init = ZuiInitState,
+                .cleanup = NULL,
+                .requiredComponents = empty,
+                .requiredComponentCount = 0};
+            unsigned int id = ZuiRegisterComponent(&info);
+            ZUI_ASSERT(id == ZUI_COMPONENT_STATE, "State component ID mismatch");
+        }
+
+        // Animation
+        {
+            static const unsigned int empty[] = {0};
+            ZuiComponentInfo info = {
+                .name = "Animation",
+                .dataSize = sizeof(ZuiAnimationData),
+                .dataAlignment = ZUI_ALIGNOF(ZuiAnimationData),
+                .initialCapacity = 64,
+                .init = ZuiInitAnimation,
+                .cleanup = NULL,
+                .requiredComponents = empty,
+                .requiredComponentCount = 0};
+            unsigned int id = ZuiRegisterComponent(&info);
+            ZUI_ASSERT(id == ZUI_COMPONENT_ANIMATION, "Animation component ID mismatch");
+        }
+
+        // Layer
+        {
+            static const unsigned int empty[] = {0};
+            ZuiComponentInfo info = {
+                .name = "Layer",
+                .dataSize = sizeof(ZuiLayerData),
+                .dataAlignment = ZUI_ALIGNOF(ZuiLayerData),
+                .initialCapacity = 64,
+                .init = ZuiInitLayer,
+                .cleanup = NULL,
+                .requiredComponents = empty,
+                .requiredComponentCount = 0};
+            unsigned int id = ZuiRegisterComponent(&info);
+            ZUI_ASSERT(id == ZUI_COMPONENT_LAYER, "Layer component ID mismatch");
+        }
+
+        TraceLog(LOG_INFO, "ZUI: Registered 9 components");
+    }
+
+    //-------------------------------------- COMPONENT SYSTEM FUNCTIONS
+
+    ZuiComponentRegistration *ZuiGetComponentRegistration(unsigned int componentId)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return NULL;
+        }
+
+        ZuiComponentRegistry *reg = &g_zui_ctx->componentRegistry;
+        for (unsigned int i = 0; i < reg->registrations.count; i++)
+        {
+            ZuiComponentRegistration *r = (ZuiComponentRegistration *)ZuiGetDynArray(&reg->registrations, i);
+            if (r && r->componentId == componentId)
             {
-                const ZuiItem *child = ZuiGetItem(childIds[i]);
-                if (child && child->renderFunction)
+                return r;
+            }
+        }
+        return NULL;
+    }
+
+    const ZuiComponentRegistration *ZuiGetComponentRegistrationConst(unsigned int componentId)
+    {
+        return ZuiGetComponentRegistration(componentId);
+    }
+
+    const ZuiComponentInfo *ZuiGetComponentInfo(unsigned int componentId)
+    {
+        const ZuiComponentRegistration *reg = ZuiGetComponentRegistrationConst(componentId);
+        return reg ? &reg->info : NULL;
+    }
+
+    unsigned int ZuiGetComponentIdByName(const char *name)
+    {
+        if (!g_zui_ctx || !name)
+        {
+            return ZUI_ID_INVALID;
+        }
+
+        ZuiComponentRegistry *reg = &g_zui_ctx->componentRegistry;
+        for (unsigned int i = 0; i < reg->registrations.count; i++)
+        {
+            ZuiComponentRegistration *r = (ZuiComponentRegistration *)ZuiGetDynArray(&reg->registrations, i);
+            if (r && strcmp(r->info.name, name) == 0)
+            {
+                return r->componentId;
+            }
+        }
+        return ZUI_ID_INVALID;
+    }
+
+    bool ZuiValidateComponentDependencies(unsigned int itemId, unsigned int componentId)
+    {
+        const ZuiItem *item = ZuiGetItem(itemId);
+        if (!item)
+        {
+            return false;
+        }
+
+        const ZuiComponentInfo *info = ZuiGetComponentInfo(componentId);
+        if (!info)
+        {
+            return false;
+        }
+
+        // Check required dependencies
+        if (info->requiredComponents && info->requiredComponentCount > 0)
+        {
+            for (unsigned int i = 0; i < info->requiredComponentCount; i++)
+            {
+                unsigned int requiredId = info->requiredComponents[i];
+                if (!ZuiItemHasComponent(itemId, requiredId))
                 {
-                    child->renderFunction(child->dataIndex);
+                    const ZuiComponentInfo *reqInfo = ZuiGetComponentInfo(requiredId);
+                    ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_STATE,
+                                     "Component '%s' requires '%s' but item doesn't have it",
+                                     info->name, reqInfo ? reqInfo->name : "unknown");
+                    return false;
                 }
             }
         }
-    }
 
-    Rectangle ZuiGetContentArea(const Rectangle parent, const ZuiPadding padding)
-    {
-        return (Rectangle){
-            parent.x + padding.left,
-            parent.y + padding.top,
-            parent.width - padding.left - padding.right,
-            parent.height - padding.top - padding.bottom,
-        };
-    }
-
-    Rectangle ZuiAlignRectangle(const Rectangle parent, const Vector2 childSize,
-                                const ZuiPadding padding, const ZuiAlignment alignment)
-    {
-        const Rectangle content = ZuiGetContentArea(parent, padding);
-        Rectangle child = {0};
-        child.width = childSize.x;
-        child.height = childSize.y;
-
-        switch (alignment)
+        // Check mutual exclusivity
+        if (info->exclusiveComponents && info->exclusiveComponentCount > 0)
         {
-        case ZUI_ALIGN_TOP_LEFT:
-            child.x = content.x;
-            child.y = content.y;
+            for (unsigned int i = 0; i < info->exclusiveComponentCount; i++)
+            {
+                unsigned int exclusiveId = info->exclusiveComponents[i];
+                if (ZuiItemHasComponent(itemId, exclusiveId))
+                {
+                    const ZuiComponentInfo *excInfo = ZuiGetComponentInfo(exclusiveId);
+                    ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_STATE,
+                                     "Component '%s' is mutually exclusive with '%s'",
+                                     info->name, excInfo ? excInfo->name : "unknown");
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    void *ZuiItemAddComponent(unsigned int itemId, unsigned int componentId)
+    {
+        ZuiItem *item = ZuiGetItemMut(itemId);
+        if (!item)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_ID, "Invalid item ID %u", itemId);
+            return NULL;
+        }
+
+        ZuiComponentRegistration *reg = ZuiGetComponentRegistration(componentId);
+        if (!reg)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_ID, "Invalid component ID %u", componentId);
+            return NULL;
+        }
+
+        // Check if already has component
+        if (ZuiItemHasComponent(itemId, componentId))
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_STATE, "Item already has component '%s'", reg->info.name);
+            return ZuiItemGetComponent(itemId, componentId);
+        }
+
+        // Check max components per item
+        if (item->componentCount >= ZUI_MAX_COMPONENTS_PER_ITEM)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_OVERFLOW, "Item has max components (%d)", ZUI_MAX_COMPONENTS_PER_ITEM);
+            return NULL;
+        }
+
+        // Validate dependencies
+        if (!ZuiValidateComponentDependencies(itemId, componentId))
+        {
+            return NULL;
+        }
+
+        // Allocate component data
+        void *data = ZuiPushDynArray(&reg->dataArray, &g_zui_arena);
+        if (!data)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_MEMORY, "Failed to allocate component data");
+            return NULL;
+        }
+
+        unsigned int dataIndex = reg->dataArray.count - 1;
+
+        // Add to item's component list
+        item->components[item->componentCount] = (ZuiItemComponent){
+            .componentId = componentId,
+            .dataIndex = dataIndex};
+        item->componentCount++;
+
+        // Call init callback
+        if (reg->info.init)
+        {
+            reg->info.init(data, itemId);
+        }
+
+#ifdef ZUI_DEBUG
+        TraceLog(LOG_DEBUG, "ZUI: Added component '%s' to item %u", reg->info.name, itemId);
+#endif
+
+        return data;
+    }
+
+    void *ZuiItemGetComponent(unsigned int itemId, unsigned int componentId)
+    {
+        const ZuiItem *item = ZuiGetItem(itemId);
+        if (!item)
+        {
+            return NULL;
+        }
+
+        for (unsigned int i = 0; i < item->componentCount; i++)
+        {
+            if (item->components[i].componentId == componentId)
+            {
+                ZuiComponentRegistration *reg = ZuiGetComponentRegistration(componentId);
+                if (!reg)
+                {
+                    return NULL;
+                }
+
+                unsigned int dataIndex = item->components[i].dataIndex;
+                if (dataIndex >= reg->dataArray.count)
+                {
+                    ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_BOUNDS, "Component data index out of bounds");
+                    return NULL;
+                }
+
+                return ZuiGetDynArray(&reg->dataArray, dataIndex);
+            }
+        }
+
+        return NULL;
+    }
+
+    const void *ZuiItemGetComponentConst(unsigned int itemId, unsigned int componentId)
+    {
+        return ZuiItemGetComponent(itemId, componentId);
+    }
+
+    bool ZuiItemHasComponent(unsigned int itemId, unsigned int componentId)
+    {
+        const ZuiItem *item = ZuiGetItem(itemId);
+        if (!item)
+        {
+            return false;
+        }
+
+        for (unsigned int i = 0; i < item->componentCount; i++)
+        {
+            if (item->components[i].componentId == componentId)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool ZuiItemRemoveComponent(unsigned int itemId, unsigned int componentId)
+    {
+        ZuiItem *item = ZuiGetItemMut(itemId);
+        if (!item)
+        {
+            return false;
+        }
+
+        for (unsigned int i = 0; i < item->componentCount; i++)
+        {
+            if (item->components[i].componentId == componentId)
+            {
+                ZuiComponentRegistration *reg = ZuiGetComponentRegistration(componentId);
+                if (reg && reg->info.cleanup)
+                {
+                    void *data = ZuiGetDynArray(&reg->dataArray, item->components[i].dataIndex);
+                    if (data)
+                    {
+                        reg->info.cleanup(data);
+                    }
+                }
+
+                // Shift remaining components
+                for (unsigned int j = i; j < item->componentCount - 1; j++)
+                {
+                    item->components[j] = item->components[j + 1];
+                }
+                item->componentCount--;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void ZuiPrintItemComponents(unsigned int itemId)
+    {
+        const ZuiItem *item = ZuiGetItem(itemId);
+        if (!item)
+        {
+            TraceLog(LOG_ERROR, "Invalid item ID: %u", itemId);
+            return;
+        }
+
+        TraceLog(LOG_INFO, "┌─── ITEM %u COMPONENTS ───", itemId);
+        TraceLog(LOG_INFO, "│ Component count: %u / %u", item->componentCount, ZUI_MAX_COMPONENTS_PER_ITEM);
+
+        for (unsigned int i = 0; i < item->componentCount; i++)
+        {
+            const ZuiComponentInfo *info = ZuiGetComponentInfo(item->components[i].componentId);
+            TraceLog(LOG_INFO, "│ [%u] %s (ID: %u, Data Index: %u)",
+                     i,
+                     info ? info->name : "unknown",
+                     item->components[i].componentId,
+                     item->components[i].dataIndex);
+        }
+
+        TraceLog(LOG_INFO, "└────────────────────────────");
+    }
+
+    void ZuiPrintRegisteredComponents(void)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        ZuiComponentRegistry *reg = &g_zui_ctx->componentRegistry;
+        TraceLog(LOG_INFO, "========== REGISTERED COMPONENTS ==========");
+        TraceLog(LOG_INFO, "Total: %u", reg->registrations.count);
+
+        for (unsigned int i = 0; i < reg->registrations.count; i++)
+        {
+            const ZuiComponentRegistration *r = (ZuiComponentRegistration *)ZuiGetDynArray(&reg->registrations, i);
+            if (!r)
+            {
+                continue;
+            }
+
+            TraceLog(LOG_INFO, "─────────────────────────");
+            TraceLog(LOG_INFO, "Component: %s", r->info.name);
+            TraceLog(LOG_INFO, "  ID: %u", r->componentId);
+            TraceLog(LOG_INFO, "  Data size: %zu bytes", r->info.dataSize);
+            TraceLog(LOG_INFO, "  Instances: %u / %u", r->dataArray.count, r->dataArray.capacity);
+
+            if (r->info.requiredComponentCount > 0)
+            {
+                TraceLog(LOG_INFO, "  Dependencies:");
+                for (unsigned int j = 0; j < r->info.requiredComponentCount; j++)
+                {
+                    const ZuiComponentInfo *depInfo = ZuiGetComponentInfo(r->info.requiredComponents[j]);
+                    TraceLog(LOG_INFO, "    - %s", depInfo ? depInfo->name : "unknown");
+                }
+            }
+        }
+
+        TraceLog(LOG_INFO, "===========================================");
+    }
+
+    //-------------------------------------- TRANSFORM IMPLEMENTATION
+
+    const ZuiTransform *ZuiGetTransform(unsigned int itemId)
+    {
+        return (const ZuiTransform *)ZuiItemGetComponentConst(itemId, ZUI_COMPONENT_TRANSFORM);
+    }
+
+    ZuiTransform *ZuiGetTransformMut(unsigned int itemId)
+    {
+        return (ZuiTransform *)ZuiItemGetComponent(itemId, ZUI_COMPONENT_TRANSFORM);
+    }
+
+    unsigned int ZuiCreateTransform(unsigned int itemId, Rectangle bounds)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return ZUI_ID_INVALID;
+        }
+
+        ZuiTransform *t = (ZuiTransform *)ZuiItemAddComponent(itemId, ZUI_COMPONENT_TRANSFORM);
+        if (!t)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_MEMORY, "Failed to add transform component");
+            return ZUI_ID_INVALID;
+        }
+
+        t->itemId = itemId;
+        t->bounds = bounds;
+        t->offset = (Vector2){0, 0};
+        t->isDirty = false;
+
+        return 0;
+    }
+
+    void ZuiSetTransformBounds(unsigned int itemId, Rectangle bounds)
+    {
+        ZuiTransform *t = ZuiGetTransformMut(itemId);
+        if (t)
+        {
+            t->bounds = bounds;
+            t->isDirty = true;
+        }
+    }
+
+    void ZuiSetTransformOffset(unsigned int itemId, Vector2 offset)
+    {
+        ZuiTransform *t = ZuiGetTransformMut(itemId);
+        if (t)
+        {
+            t->offset = offset;
+            t->isDirty = true;
+        }
+    }
+
+    Rectangle ZuiGetTransformBounds(unsigned int itemId)
+    {
+        const ZuiTransform *t = ZuiGetTransform(itemId);
+        if (!t)
+        {
+            return (Rectangle){0, 0, 0, 0};
+        }
+
+        Rectangle bounds = t->bounds;
+        bounds.x += t->offset.x;
+        bounds.y += t->offset.y;
+        return bounds;
+    }
+
+    void ZuiMarkTransformDirty(unsigned int itemId)
+    {
+        ZuiTransform *t = ZuiGetTransformMut(itemId);
+        if (t)
+        {
+            t->isDirty = true;
+        }
+    }
+
+    void ZuiPrintTransform(unsigned int itemId)
+    {
+        const ZuiTransform *t = ZuiGetTransform(itemId);
+        if (!t)
+        {
+            TraceLog(LOG_ERROR, "Failed to get transform for item %u", itemId);
+            return;
+        }
+
+        TraceLog(LOG_INFO, "┌─────── TRANSFORM ───────");
+        TraceLog(LOG_INFO, "│ Item ID:  %u", t->itemId);
+        TraceLog(LOG_INFO, "│ Bounds:   (%.1f, %.1f, %.1fx%.1f)",
+                 (double)t->bounds.x, (double)t->bounds.y,
+                 (double)t->bounds.width, (double)t->bounds.height);
+        TraceLog(LOG_INFO, "│ Offset:   (%.1f, %.1f)",
+                 (double)t->offset.x, (double)t->offset.y);
+        TraceLog(LOG_INFO, "│ Dirty:    %s", t->isDirty ? "yes" : "no");
+        TraceLog(LOG_INFO, "└─────────────────────────");
+    }
+
+    //-------------------------------------- LAYOUT ACCESSORS
+
+    ZuiLayoutData *ZuiGetLayoutDataMut(unsigned int itemId)
+    {
+        return (ZuiLayoutData *)ZuiItemGetComponent(itemId, ZUI_COMPONENT_LAYOUT);
+    }
+
+    const ZuiLayoutData *ZuiGetLayoutData(unsigned int itemId)
+    {
+        return (const ZuiLayoutData *)ZuiItemGetComponentConst(itemId, ZUI_COMPONENT_LAYOUT);
+    }
+
+    ZuiAlignData *ZuiGetAlignDataMut(unsigned int itemId)
+    {
+        return (ZuiAlignData *)ZuiItemGetComponent(itemId, ZUI_COMPONENT_ALIGN);
+    }
+
+    const ZuiAlignData *ZuiGetAlignData(unsigned int itemId)
+    {
+        return (const ZuiAlignData *)ZuiItemGetComponentConst(itemId, ZUI_COMPONENT_ALIGN);
+    }
+
+    static ZuiAlignData *ZuiGetOrCreateAlignData(unsigned int itemId)
+    {
+        ZuiAlignData *a = ZuiGetAlignDataMut(itemId);
+        if (a)
+        {
+            return a;
+        }
+
+        a = (ZuiAlignData *)ZuiItemAddComponent(itemId, ZUI_COMPONENT_ALIGN);
+        if (a)
+        {
+            a->itemId = itemId;
+            a->alignX = ZUI_ALIGN_X_LEFT;
+            a->alignY = ZUI_ALIGN_Y_TOP;
+            a->widthMode = ZUI_SIZE_HUG;
+            a->heightMode = ZUI_SIZE_HUG;
+            a->overrideX = false;
+            a->overrideY = false;
+        }
+        return a;
+    }
+
+    //-------------------------------------- LAYOUT MEASUREMENT
+
+    static Vector2 ZuiMeasureWidget(unsigned int itemId)
+    {
+        const ZuiItem *item = ZuiGetItem(itemId);
+        if (!item)
+        {
+            return (Vector2){0, 0};
+        }
+
+        const ZuiAlignData *a = ZuiGetAlignData(itemId);
+        if (a && a->widthMode == ZUI_SIZE_FIXED && a->heightMode == ZUI_SIZE_FIXED)
+        {
+            return (Vector2){a->fixedWidth, a->fixedHeight};
+        }
+
+        Vector2 size = {0};
+        if (item->type == ZUI_FRAME && ZuiItemHasComponent(itemId, ZUI_COMPONENT_LAYOUT))
+        {
+            const ZuiLayoutData *l = ZuiGetLayoutData(itemId);
+            size = l ? (Vector2){l->measuredWidth, l->measuredHeight}
+                     : (Vector2){ZuiGetTransformBounds(itemId).width, ZuiGetTransformBounds(itemId).height};
+        }
+        else
+        {
+            Rectangle bounds = ZuiGetTransformBounds(itemId);
+            size = (Vector2){bounds.width, bounds.height};
+        }
+
+        return (Vector2){
+            (a && a->widthMode == ZUI_SIZE_FIXED) ? a->fixedWidth : size.x,
+            (a && a->heightMode == ZUI_SIZE_FIXED) ? a->fixedHeight : size.y};
+    }
+
+    static void ZuiMeasure(unsigned int itemId, int depth, bool isVertical);
+    static void ZuiArrange(unsigned int itemId, Rectangle bounds, int depth, bool isVertical);
+
+    // NOLINTBEGIN(misc-no-recursion)
+    static void ZuiProcessChildLayout(unsigned int childId, int depth)
+    {
+        const ZuiItem *child = ZuiGetItem(childId);
+        if (!child || child->type != ZUI_FRAME)
+        {
+            return;
+        }
+
+        const ZuiLayoutData *l = ZuiGetLayoutData(childId);
+        if (!l)
+        {
+            return;
+        }
+
+        const bool isVert = (l->kind == ZUI_LAYOUT_VERTICAL);
+        const bool isHoriz = (l->kind == ZUI_LAYOUT_HORIZONTAL);
+
+        if (isVert || isHoriz)
+        {
+            ZuiMeasure(childId, depth + 1, isVert);
+        }
+        else if (l->kind == ZUI_LAYOUT_GRID)
+        {
+            const unsigned int cols = l->gridColumns > 0 ? l->gridColumns : 1;
+            const unsigned int childCount = child->children.count;
+            if (childCount == 0 || cols > ZUI_MAX_TREE_DEPTH)
+            {
+                ZuiLayoutData *mut = ZuiGetLayoutDataMut(childId);
+                if (mut)
+                {
+                    mut->measuredWidth = mut->measuredHeight = (l->padding * 2);
+                }
+                return;
+            }
+
+            const unsigned int rows = (childCount + cols - 1) / cols;
+            if (rows > ZUI_MAX_TREE_DEPTH)
+            {
+                return;
+            }
+
+            const unsigned int *childIds = (const unsigned int *)child->children.items;
+            float colWidths[ZUI_MAX_TREE_DEPTH] = {0};
+            float rowHeights[ZUI_MAX_TREE_DEPTH] = {0};
+
+            for (unsigned int i = 0; i < childCount; i++)
+            {
+                ZuiProcessChildLayout(childIds[i], depth + 1);
+                Vector2 sz = ZuiMeasureWidget(childIds[i]);
+                const unsigned int c = i % cols;
+                const unsigned int r = i / cols;
+                if (sz.x > colWidths[c])
+                {
+                    colWidths[c] = sz.x;
+                }
+                if (sz.y > rowHeights[r])
+                {
+                    rowHeights[r] = sz.y;
+                }
+            }
+
+            float w = 0;
+            float h = 0;
+            for (unsigned int c = 0; c < cols; c++)
+            {
+                w += colWidths[c];
+            }
+            for (unsigned int r = 0; r < rows; r++)
+            {
+                h += rowHeights[r];
+            }
+
+            if (cols > 1)
+            {
+                w += l->spacing * (float)(cols - 1);
+            }
+            if (rows > 1)
+            {
+                h += l->spacing * (float)(rows - 1);
+            }
+
+            ZuiLayoutData *mut = ZuiGetLayoutDataMut(childId);
+            if (mut)
+            {
+                mut->measuredWidth = w + (l->padding * 2);
+                mut->measuredHeight = h + (l->padding * 2);
+            }
+        }
+    }
+
+    static void ZuiMeasure(unsigned int itemId, int depth, bool isVertical)
+    {
+        if (depth >= ZUI_MAX_TREE_DEPTH)
+        {
+            return;
+        }
+
+        ZuiLayoutData *l = ZuiGetLayoutDataMut(itemId);
+        const ZuiItem *item = ZuiGetItem(itemId);
+
+        if (!l || !item || !item->isContainer)
+        {
+            if (l)
+            {
+                l->measuredWidth = l->measuredHeight = (l->padding * 2);
+            }
+            return;
+        }
+
+        unsigned int childCount = item->children.count;
+        if (childCount == 0 || childCount > ZUI_MAX_TREE_DEPTH)
+        {
+            l->measuredWidth = l->measuredHeight = (l->padding * 2);
+            return;
+        }
+
+        const unsigned int *childIds = (const unsigned int *)item->children.items;
+        float primary = 0;
+        float secondary = 0;
+
+        for (unsigned int i = 0; i < childCount; i++)
+        {
+            ZuiProcessChildLayout(childIds[i], depth);
+            Vector2 sz = ZuiMeasureWidget(childIds[i]);
+
+            if (isVertical)
+            {
+                primary += sz.y;
+                if (sz.x > secondary)
+                {
+                    secondary = sz.x;
+                }
+            }
+            else
+            {
+                primary += sz.x;
+                if (sz.y > secondary)
+                {
+                    secondary = sz.y;
+                }
+            }
+        }
+
+        if (childCount > 1)
+        {
+            primary += l->spacing * (float)(childCount - 1);
+        }
+
+        if (isVertical)
+        {
+            l->measuredWidth = secondary + (l->padding * 2);
+            l->measuredHeight = primary + (l->padding * 2);
+        }
+        else
+        {
+            l->measuredWidth = primary + (l->padding * 2);
+            l->measuredHeight = secondary + (l->padding * 2);
+        }
+    }
+
+    //-------------------------------------- LAYOUT ARRANGEMENT
+
+    static Rectangle ZuiAlignChild(Rectangle childBounds, Rectangle contentArea,
+                                   ZuiAlignmentX alignX, ZuiAlignmentY alignY)
+    {
+        switch (alignX)
+        {
+        case ZUI_ALIGN_X_CENTER:
+            childBounds.x = contentArea.x + ((contentArea.width - childBounds.width) * 0.5F);
             break;
-        case ZUI_ALIGN_TOP_CENTER:
-            child.x = content.x + ((content.width - child.width) * 0.5F);
-            child.y = content.y;
+        case ZUI_ALIGN_X_RIGHT:
+            childBounds.x = contentArea.x + contentArea.width - childBounds.width;
             break;
-        case ZUI_ALIGN_TOP_RIGHT:
-            child.x = content.x + content.width - child.width;
-            child.y = content.y;
+        default:
+            childBounds.x = contentArea.x;
             break;
-        case ZUI_ALIGN_MIDDLE_LEFT:
-            child.x = content.x;
-            child.y = content.y + ((content.height - child.height) * 0.5F);
+        }
+
+        switch (alignY)
+        {
+        case ZUI_ALIGN_Y_CENTER:
+            childBounds.y = contentArea.y + ((contentArea.height - childBounds.height) * 0.5F);
             break;
-        case ZUI_ALIGN_CENTER:
-            child.x = content.x + ((content.width - child.width) * 0.5F);
-            child.y = content.y + ((content.height - child.height) * 0.5F);
+        case ZUI_ALIGN_Y_BOTTOM:
+            childBounds.y = contentArea.y + contentArea.height - childBounds.height;
             break;
-        case ZUI_ALIGN_MIDDLE_RIGHT:
-            child.x = content.x + content.width - child.width;
-            child.y = content.y + ((content.height - child.height) * 0.5F);
+        default:
+            childBounds.y = contentArea.y;
             break;
-        case ZUI_ALIGN_BOTTOM_LEFT:
-            child.x = content.x;
-            child.y = content.y + content.height - child.height;
+        }
+
+        return childBounds;
+    }
+
+    static void ZuiPositionChild(unsigned int childId, Rectangle bounds)
+    {
+        const ZuiItem *child = ZuiGetItem(childId);
+        if (!child)
+        {
+            return;
+        }
+
+        if (child->type == ZUI_LABEL)
+        {
+            Rectangle curr = ZuiGetTransformBounds(childId);
+            curr.x = bounds.x;
+            curr.y = bounds.y;
+            ZuiSetTransformBounds(childId, curr);
+        }
+        else
+        {
+            ZuiSetTransformBounds(childId, bounds);
+        }
+    }
+
+    static void ZuiArrangeChildLayout(unsigned int childId, Rectangle bounds, int depth);
+
+    static void ZuiArrange(unsigned int itemId, Rectangle bounds, int depth, bool isVertical)
+    {
+        if (depth >= ZUI_MAX_TREE_DEPTH)
+        {
+            return;
+        }
+
+        const ZuiLayoutData *l = ZuiGetLayoutData(itemId);
+        const ZuiItem *item = ZuiGetItem(itemId);
+        if (!l || !item || !item->isContainer)
+        {
+            return;
+        }
+
+        ZuiSetTransformBounds(itemId, bounds);
+        Rectangle content = {
+            bounds.x + l->padding, bounds.y + l->padding,
+            bounds.width - (l->padding * 2), bounds.height - (l->padding * 2)};
+
+        const unsigned int childCount = item->children.count;
+        if (childCount == 0)
+        {
+            return;
+        }
+
+        const unsigned int *childIds = (const unsigned int *)item->children.items;
+
+        // Calculate FILL sizing
+        unsigned int fillCount = 0;
+        float fixedTotal = 0;
+        for (unsigned int i = 0; i < childCount; i++)
+        {
+            const ZuiAlignData *a = ZuiGetAlignData(childIds[i]);
+            Vector2 sz = ZuiMeasureWidget(childIds[i]);
+            const bool fills = a && ((isVertical && a->heightMode == ZUI_SIZE_FILL) ||
+                                     (!isVertical && a->widthMode == ZUI_SIZE_FILL));
+            if (fills)
+            {
+                fillCount++;
+            }
+            else
+            {
+                fixedTotal += isVertical ? sz.y : sz.x;
+            }
+        }
+
+        const float spacingTotal = (childCount > 1) ? l->spacing * (float)(childCount - 1) : 0;
+        const float contentSize = isVertical ? content.height : content.width;
+        const float fillSize = fillCount > 0 ? fmaxf(0, (contentSize - fixedTotal - spacingTotal) / (float)fillCount) : 0;
+
+        // Calculate justification
+        float remaining = contentSize - (fixedTotal + fillSize * (float)fillCount + spacingTotal);
+        float primary = isVertical ? content.y : content.x;
+        float spacing = l->spacing;
+
+        switch (l->justify)
+        {
+        case ZUI_JUSTIFY_CENTER:
+            primary += remaining * 0.5F;
             break;
-        case ZUI_ALIGN_BOTTOM_CENTER:
-            child.x = content.x + ((content.width - child.width) * 0.5F);
-            child.y = content.y + content.height - child.height;
+        case ZUI_JUSTIFY_END:
+            primary += remaining;
             break;
-        case ZUI_ALIGN_BOTTOM_RIGHT:
-            child.x = content.x + content.width - child.width;
-            child.y = content.y + content.height - child.height;
+        case ZUI_JUSTIFY_SPACE_BETWEEN:
+            if (childCount > 1)
+            {
+                spacing = (remaining + spacingTotal) / (float)(childCount - 1);
+            }
+            break;
+        case ZUI_JUSTIFY_SPACE_AROUND:
+            if (childCount > 0)
+            {
+                const float gap = remaining / (float)childCount;
+                primary += gap * 0.5F;
+                spacing += gap;
+            }
+            break;
+        case ZUI_JUSTIFY_SPACE_EVENLY:
+            if (childCount > 0)
+            {
+                const float gap = remaining / (float)(childCount + 1);
+                primary += gap;
+                spacing += gap;
+            }
             break;
         default:
             break;
         }
 
-        return child;
-    }
-
-    Rectangle ZuiCalculateChildBounds(const Rectangle childBounds, const Rectangle bounds, const ZuiItemOptions options)
-    {
-        Vector2 position = (Vector2){childBounds.x, childBounds.y};
-        Vector2 size = (Vector2){childBounds.width, childBounds.height};
-
-        if (options.placement == ZUI_PLACE_RELATIVE)
+        // Position children
+        for (unsigned int i = 0; i < childCount; i++)
         {
-            position.x += bounds.x;
-            position.y += bounds.y;
-        }
+            const ZuiAlignData *a = ZuiGetAlignData(childIds[i]);
+            Vector2 sz = ZuiMeasureWidget(childIds[i]);
 
-        if (options.placement == ZUI_PLACE_ALIGN)
-        {
-            Rectangle new = ZuiAlignRectangle(
-                bounds, size,
-                (ZuiPadding){ZUI_DEFAULT_FRAME_PADDING, ZUI_DEFAULT_FRAME_PADDING,
-                             ZUI_DEFAULT_FRAME_PADDING, ZUI_DEFAULT_FRAME_PADDING},
-                options.alignment);
-            position = (Vector2){new.x, new.y};
-        }
+            float pSize = 0;
+            float sSize = 0;
+            ZuiAlignmentX ax = l->childAlignX;
+            ZuiAlignmentY ay = l->childAlignY;
 
-        if (options.placement == ZUI_PLACE_CURSOR)
-        {
-            position = options.cursor;
-        }
+            if (isVertical)
+            {
+                pSize = (a && a->heightMode == ZUI_SIZE_FILL) ? fillSize : sz.y;
+                sSize = (a && a->widthMode == ZUI_SIZE_FILL) ? content.width : sz.x;
+                if (a && a->overrideX)
+                {
+                    ax = a->alignX;
+                }
+            }
+            else
+            {
+                pSize = (a && a->widthMode == ZUI_SIZE_FILL) ? fillSize : sz.x;
+                sSize = (a && a->heightMode == ZUI_SIZE_FILL) ? content.height : sz.y;
+                if (a && a->overrideY)
+                {
+                    ay = a->alignY;
+                }
+            }
 
-        return (Rectangle){position.x, position.y, size.x, size.y};
-    }
+            Rectangle childBounds = isVertical ? (Rectangle){content.x, primary, sSize, pSize}
+                                               : (Rectangle){primary, content.y, pSize, sSize};
+            Rectangle contentArea = isVertical ? (Rectangle){content.x, primary, content.width, pSize}
+                                               : (Rectangle){primary, content.y, pSize, content.height};
 
-    const char *ZuiGetAlignmentName(const ZuiAlignment alignment)
-    {
-        switch (alignment)
-        {
-        case ZUI_ALIGN_TOP_LEFT:
-            return "Top Left";
-        case ZUI_ALIGN_TOP_CENTER:
-            return "Top Center";
-        case ZUI_ALIGN_TOP_RIGHT:
-            return "Top Right";
-        case ZUI_ALIGN_MIDDLE_LEFT:
-            return "Middle Left";
-        case ZUI_ALIGN_CENTER:
-            return "Center";
-        case ZUI_ALIGN_MIDDLE_RIGHT:
-            return "Middle Right";
-        case ZUI_ALIGN_BOTTOM_LEFT:
-            return "Bottom Left";
-        case ZUI_ALIGN_BOTTOM_CENTER:
-            return "Bottom Center";
-        case ZUI_ALIGN_BOTTOM_RIGHT:
-            return "Bottom Right";
-        default:
-            return "Unknown";
+            childBounds = ZuiAlignChild(childBounds, contentArea, ax, ay);
+            ZuiPositionChild(childIds[i], childBounds);
+            ZuiArrangeChildLayout(childIds[i], childBounds, depth);
+
+            primary += pSize + spacing;
         }
     }
 
-    void ZuiPrintFrame(const unsigned int id)
+    static void ZuiArrangeChildLayout(unsigned int childId, Rectangle bounds, int depth)
     {
-        const ZuiItem *item = ZuiGetItem(id);
-        if (!item || item->type != ZUI_FRAME)
+        const ZuiItem *child = ZuiGetItem(childId);
+        if (!child || child->type != ZUI_FRAME)
         {
-            TraceLog(LOG_ERROR, "Item %u is not a frame", id);
             return;
         }
 
-        const ZuiFrameData *frame = ZuiGetFrameData(id);
-        if (!frame)
+        const ZuiLayoutData *l = ZuiGetLayoutData(childId);
+        if (!l)
         {
-            TraceLog(LOG_ERROR, "Failed to get frame data for item %u", id);
             return;
         }
 
-        TraceLog(LOG_INFO, "┌─────── FRAME DATA ───────");
-        TraceLog(LOG_INFO, "│ Item ID:      %u", frame->itemId);
-        TraceLog(LOG_INFO, "│ Bounds:       (%.1f, %.1f, %.1fx%.1f)",
-                 (double)frame->bounds.x, (double)frame->bounds.y,
-                 (double)frame->bounds.width, (double)frame->bounds.height);
-        TraceLog(LOG_INFO, "│ Padding:      %.1f", (double)frame->padding);
-        TraceLog(LOG_INFO, "│ Gap:          %.1f", (double)frame->gap);
-        TraceLog(LOG_INFO, "│ Has BG:       %s", frame->hasBackground ? "yes" : "no");
-        if (frame->hasBackground)
+        const bool isVert = (l->kind == ZUI_LAYOUT_VERTICAL);
+        const bool isHoriz = (l->kind == ZUI_LAYOUT_HORIZONTAL);
+
+        if (isVert || isHoriz)
         {
-            TraceLog(LOG_INFO, "│ BG Color:     (%d, %d, %d, %d)",
-                     frame->backgroundColor.r, frame->backgroundColor.g,
-                     frame->backgroundColor.b, frame->backgroundColor.a);
+            ZuiArrange(childId, bounds, depth + 1, isVert);
         }
-        TraceLog(LOG_INFO, "│ Has Outline:  %s", frame->hasOutline ? "yes" : "no");
-        if (frame->hasOutline)
+        else if (l->kind == ZUI_LAYOUT_GRID)
         {
-            TraceLog(LOG_INFO, "│ Outline:      (%d, %d, %d, %d) thickness=%.1f",
-                     frame->outlineColor.r, frame->outlineColor.g,
-                     frame->outlineColor.b, frame->outlineColor.a,
-                     (double)frame->outlineThickness);
+            const unsigned int cols = l->gridColumns > 0 ? l->gridColumns : 1;
+            const unsigned int childCount = child->children.count;
+            if (childCount == 0 || cols > ZUI_MAX_TREE_DEPTH)
+            {
+                return;
+            }
+
+            const unsigned int rows = (childCount + cols - 1) / cols;
+            if (rows > ZUI_MAX_TREE_DEPTH)
+            {
+                return;
+            }
+
+            ZuiSetTransformBounds(childId, bounds);
+            Rectangle content = {
+                bounds.x + l->padding, bounds.y + l->padding,
+                bounds.width - (l->padding * 2), bounds.height - (l->padding * 2)};
+
+            const unsigned int *childIds = (const unsigned int *)child->children.items;
+            float colWidths[ZUI_MAX_TREE_DEPTH] = {0};
+            float rowHeights[ZUI_MAX_TREE_DEPTH] = {0};
+            float colX[ZUI_MAX_TREE_DEPTH] = {0};
+            float rowY[ZUI_MAX_TREE_DEPTH] = {0};
+
+            // Measure
+            for (unsigned int i = 0; i < childCount; i++)
+            {
+                Vector2 sz = ZuiMeasureWidget(childIds[i]);
+                const unsigned int c = i % cols;
+                const unsigned int r = i / cols;
+                if (sz.x > colWidths[c])
+                {
+                    colWidths[c] = sz.x;
+                }
+                if (sz.y > rowHeights[r])
+                {
+                    rowHeights[r] = sz.y;
+                }
+            }
+
+            // Compute positions
+            colX[0] = content.x;
+            for (unsigned int c = 1; c < cols; c++)
+            {
+                colX[c] = colX[c - 1] + colWidths[c - 1] + l->spacing;
+            }
+
+            rowY[0] = content.y;
+            for (unsigned int r = 1; r < rows; r++)
+            {
+                rowY[r] = rowY[r - 1] + rowHeights[r - 1] + l->spacing;
+            }
+
+            // Position children
+            for (unsigned int i = 0; i < childCount; i++)
+            {
+                const unsigned int c = i % cols;
+                const unsigned int r = i / cols;
+                Rectangle cell = {colX[c], rowY[r], colWidths[c], rowHeights[r]};
+
+                const ZuiAlignData *a = ZuiGetAlignData(childIds[i]);
+                ZuiAlignmentX ax = a && a->overrideX ? a->alignX : l->childAlignX;
+                ZuiAlignmentY ay = a && a->overrideY ? a->alignY : l->childAlignY;
+
+                Vector2 sz = ZuiMeasureWidget(childIds[i]);
+                Rectangle aligned = ZuiAlignChild((Rectangle){cell.x, cell.y, sz.x, sz.y}, cell, ax, ay);
+
+                ZuiPositionChild(childIds[i], aligned);
+                ZuiArrangeChildLayout(childIds[i], aligned, depth + 1);
+            }
         }
-        TraceLog(LOG_INFO, "└──────────────────────────");
+    }
+    // NOLINTEND(misc-no-recursion)
+
+    //-------------------------------------- LAYOUT API IMPLEMENTATION
+
+    ZuiResult ZuiItemSetLayout(unsigned int itemId, ZuiLayoutKind kind)
+    {
+        const ZuiItem *item = ZuiGetItem(itemId);
+        if (!item || !g_zui_ctx)
+        {
+            return ZUI_ERROR_INVALID_ID;
+        }
+
+        ZuiLayoutData *l = ZuiGetLayoutDataMut(itemId);
+        if (l)
+        {
+            l->kind = kind;
+            return ZUI_OK;
+        }
+
+        l = (ZuiLayoutData *)ZuiItemAddComponent(itemId, ZUI_COMPONENT_LAYOUT);
+        if (!l)
+        {
+            return ZUI_ERROR_OUT_OF_MEMORY;
+        }
+
+        l->itemId = itemId;
+        l->kind = kind;
+        l->spacing = ZUI_DEFAULT_FRAME_GAP;
+        l->padding = ZUI_DEFAULT_FRAME_PADDING;
+        l->gridColumns = 3;
+        l->childAlignX = ZUI_ALIGN_X_LEFT;
+        l->childAlignY = ZUI_ALIGN_Y_TOP;
+        l->justify = ZUI_JUSTIFY_START;
+
+        return ZUI_OK;
     }
 
-    void ZuiBeginRow(void)
+    void ZuiLayoutSetSpacing(unsigned int itemId, float spacing)
     {
-        if (!g_zui_ctx)
+        ZuiLayoutData *l = ZuiGetLayoutDataMut(itemId);
+        if (l)
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return;
+            l->spacing = spacing;
         }
+    }
 
-        g_zui_ctx->cursor.isRow = true;
+    void ZuiLayoutSetPadding(unsigned int itemId, float padding)
+    {
+        ZuiLayoutData *l = ZuiGetLayoutDataMut(itemId);
+        if (l)
+        {
+            l->padding = padding;
+        }
+    }
+
+    void ZuiLayoutSetGridColumns(unsigned int itemId, unsigned int columns)
+    {
+        ZuiLayoutData *l = ZuiGetLayoutDataMut(itemId);
+        if (l && columns > 0)
+        {
+            l->gridColumns = columns;
+        }
+    }
+
+    void ZuiLayoutSetChildAlignX(unsigned int itemId, ZuiAlignmentX align)
+    {
+        ZuiLayoutData *l = ZuiGetLayoutDataMut(itemId);
+        if (l)
+        {
+            l->childAlignX = align;
+        }
+    }
+
+    void ZuiLayoutSetChildAlignY(unsigned int itemId, ZuiAlignmentY align)
+    {
+        ZuiLayoutData *l = ZuiGetLayoutDataMut(itemId);
+        if (l)
+        {
+            l->childAlignY = align;
+        }
+    }
+
+    void ZuiLayoutSetJustify(unsigned int itemId, ZuiJustify justify)
+    {
+        ZuiLayoutData *l = ZuiGetLayoutDataMut(itemId);
+        if (l)
+        {
+            l->justify = justify;
+        }
+    }
+
+    void ZuiItemSetAlignX(unsigned int itemId, ZuiAlignmentX align)
+    {
+        ZuiAlignData *a = ZuiGetOrCreateAlignData(itemId);
+        if (a)
+        {
+            a->alignX = align;
+            a->overrideX = true;
+        }
+    }
+
+    void ZuiItemSetAlignY(unsigned int itemId, ZuiAlignmentY align)
+    {
+        ZuiAlignData *a = ZuiGetOrCreateAlignData(itemId);
+        if (a)
+        {
+            a->alignY = align;
+            a->overrideY = true;
+        }
+    }
+
+    void ZuiItemSetSizeMode(unsigned int itemId, ZuiSizeMode widthMode, ZuiSizeMode heightMode)
+    {
+        ZuiAlignData *a = ZuiGetOrCreateAlignData(itemId);
+        if (a)
+        {
+            a->widthMode = widthMode;
+            a->heightMode = heightMode;
+        }
+    }
+
+    void ZuiItemSetFixedSize(unsigned int itemId, float width, float height)
+    {
+        ZuiAlignData *a = ZuiGetOrCreateAlignData(itemId);
+        if (a)
+        {
+            a->widthMode = ZUI_SIZE_FIXED;
+            a->heightMode = ZUI_SIZE_FIXED;
+            a->fixedWidth = width;
+            a->fixedHeight = height;
+        }
+    }
+
+    unsigned int ZuiBeginVertical(Vector2 pos, float spacing, Color color)
+    {
+        unsigned int id = ZuiBeginFrame((Rectangle){pos.x, pos.y, 0, 0}, color);
+        ZuiItemSetLayout(id, ZUI_LAYOUT_VERTICAL);
+        ZuiLayoutSetSpacing(id, spacing);
+        return id;
+    }
+
+    unsigned int ZuiBeginHorizontal(Vector2 pos, float spacing, Color color)
+    {
+        unsigned int id = ZuiBeginFrame((Rectangle){pos.x, pos.y, 0, 0}, color);
+        ZuiItemSetLayout(id, ZUI_LAYOUT_HORIZONTAL);
+        ZuiLayoutSetSpacing(id, spacing);
+        return id;
+    }
+
+    unsigned int ZuiBeginGrid(Vector2 pos, unsigned int columns, float spacing, Color color)
+    {
+        unsigned int id = ZuiBeginFrame((Rectangle){pos.x, pos.y, 0, 0}, color);
+        ZuiItemSetLayout(id, ZUI_LAYOUT_GRID);
+        ZuiLayoutSetSpacing(id, spacing);
+        ZuiLayoutSetGridColumns(id, columns);
+        return id;
+    }
+
+    unsigned int ZuiBeginVerticalCentered(float spacing, Color color)
+    {
+        unsigned int id = ZuiBeginFrame((Rectangle){0, 0, 0, 0}, color);
+        ZuiItemSetLayout(id, ZUI_LAYOUT_VERTICAL);
+        ZuiLayoutSetSpacing(id, spacing);
+        ZuiItemSetAlignX(id, ZUI_ALIGN_X_CENTER);
+        ZuiItemSetAlignY(id, ZUI_ALIGN_Y_CENTER);
+        return id;
+    }
+
+    unsigned int ZuiBeginRow2(float spacing)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return ZUI_ID_INVALID;
+        }
+        Rectangle b = {g_zui_ctx->cursor.position.x, g_zui_ctx->cursor.position.y, 0, 0};
+        unsigned int id = ZuiBeginFrame(b, BLANK);
+        ZuiItemSetLayout(id, ZUI_LAYOUT_HORIZONTAL);
+        ZuiLayoutSetSpacing(id, spacing);
+        ZuiLayoutSetPadding(id, 0);
+        return id;
+    }
+
+    unsigned int ZuiBeginColumn(float spacing)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return ZUI_ID_INVALID;
+        }
+        Rectangle b = {g_zui_ctx->cursor.position.x, g_zui_ctx->cursor.position.y, 0, 0};
+        unsigned int id = ZuiBeginFrame(b, BLANK);
+        ZuiItemSetLayout(id, ZUI_LAYOUT_VERTICAL);
+        ZuiLayoutSetSpacing(id, spacing);
+        ZuiLayoutSetPadding(id, 0);
+        return id;
     }
 
     void ZuiEndRow(void)
@@ -2480,169 +3344,745 @@ extern "C"
         ZuiAdvanceLine();
     }
 
-    unsigned int ZuiBeginFrame(const Rectangle bounds, const Color color)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return ZUI_ID_INVALID;
-        }
-
-        g_zui_ctx->cursor.isRow = false;
-        unsigned int id = ZuiCreateFrame(bounds, color);
-
-        if (id == ZUI_ID_INVALID)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_VALUE, "Failed to create frame");
-            return ZUI_ID_INVALID;
-        }
-
-        ZuiFrameData *frameData = ZuiGetFrameDataMut(id);
-        if (!frameData)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_VALUE, "Failed to get frame data");
-            return ZUI_ID_INVALID;
-        }
-
-        frameData->bounds = bounds;
-        unsigned int active = g_zui_ctx->cursor.activeFrame;
-        ZuiItemAddChild(active, id);
-
-        g_zui_ctx->cursor.parentFrame = g_zui_ctx->cursor.activeFrame;
-        float pad = frameData->padding;
-        g_zui_ctx->cursor.position = (Vector2){bounds.x + pad, bounds.y + pad};
-        g_zui_ctx->cursor.restPosition = g_zui_ctx->cursor.position;
-        g_zui_ctx->cursor.tempRestPosition = g_zui_ctx->cursor.position;
-        g_zui_ctx->cursor.activeFrame = id;
-        return id;
-    }
-
-    void ZuiEndFrame(void)
+    void ZuiBeginRow(void)
     {
         if (!g_zui_ctx)
         {
             ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
             return;
+        }
+
+        g_zui_ctx->cursor.isRow = true;
+    }
+
+    void ZuiEndFrame2(void)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        const unsigned int frameId = g_zui_ctx->cursor.activeFrame;
+        const ZuiItem *item = ZuiGetItem(frameId);
+        if (!item)
+        {
+            ZuiEndFrame();
+            return;
+        }
+
+        const ZuiLayoutData *l = ZuiGetLayoutData(frameId);
+        if (!l)
+        {
+            ZuiEndFrame();
+            return;
+        }
+
+        // Measure
+        if (l->kind == ZUI_LAYOUT_VERTICAL)
+        {
+            ZuiMeasure(frameId, 0, true);
+        }
+        else if (l->kind == ZUI_LAYOUT_HORIZONTAL)
+        {
+            ZuiMeasure(frameId, 0, false);
+        }
+        else if (l->kind == ZUI_LAYOUT_GRID)
+        {
+            ZuiProcessChildLayout(frameId, 0);
+        }
+
+        // Get measured size
+        l = ZuiGetLayoutData(frameId);
+        if (!l)
+        {
+            ZuiEndFrame();
+            return;
+        }
+
+        Rectangle bounds = ZuiGetTransformBounds(frameId);
+        if (bounds.width == 0)
+        {
+            bounds.width = l->measuredWidth;
+        }
+        if (bounds.height == 0)
+        {
+            bounds.height = l->measuredHeight;
+        }
+
+        if (l->kind == ZUI_LAYOUT_VERTICAL)
+        {
+            ZuiArrange(frameId, bounds, 0, true);
+        }
+        else if (l->kind == ZUI_LAYOUT_HORIZONTAL)
+        {
+            ZuiArrange(frameId, bounds, 0, false);
+        }
+        else if (l->kind == ZUI_LAYOUT_GRID)
+        {
+            ZuiArrangeChildLayout(frameId, bounds, 0);
+        }
+
+        const ZuiFrameData *parentFrame = ZuiGetFrameData(g_zui_ctx->cursor.parentFrame);
+        if (parentFrame)
+        {
+            bounds = ZuiGetTransformBounds(frameId);
+            ZuiAdvanceCursor(bounds.width, bounds.height);
         }
 
         g_zui_ctx->cursor.isRow = false;
         g_zui_ctx->cursor.activeFrame = g_zui_ctx->cursor.parentFrame;
     }
 
-    unsigned int ZuiNewFrame(const Color color, const float width, const float height)
+    //-------------------------------------- ANIMATION IMPLEMENTATION
+
+    ZuiAnimationData *ZuiGetAnimationMut(unsigned int itemId)
     {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return ZUI_ID_INVALID;
-        }
-
-        Rectangle bounds = (Rectangle){g_zui_ctx->cursor.position.x, g_zui_ctx->cursor.position.y, width, height};
-        unsigned int id = ZuiCreateFrame(bounds, color);
-
-        ZuiFrameData *frameData = ZuiGetFrameDataMut(id);
-        if (!frameData)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_VALUE, "Failed to get frame data");
-            return ZUI_ID_INVALID;
-        }
-
-        frameData->bounds = bounds;
-
-        unsigned int active = g_zui_ctx->cursor.activeFrame;
-        ZuiItemAddChild(active, id);
-
-        ZuiAdvanceCursor(frameData->bounds.width, frameData->bounds.height);
-        g_zui_ctx->cursor.lastItemBounds = frameData->bounds;
-
-        return id;
+        return (ZuiAnimationData *)ZuiItemGetComponent(itemId, ZUI_COMPONENT_ANIMATION);
     }
 
-    void ZuiFrameBackground(const Color color)
+    const ZuiAnimationData *ZuiGetAnimation(unsigned int itemId)
     {
-        if (!g_zui_ctx)
+        return (const ZuiAnimationData *)ZuiItemGetComponentConst(itemId, ZUI_COMPONENT_ANIMATION);
+    }
+
+    ZuiAnimationData *ZuiAddAnimation(unsigned int itemId)
+    {
+        return (ZuiAnimationData *)ZuiItemAddComponent(itemId, ZUI_COMPONENT_ANIMATION);
+    }
+
+    void ZuiAnimSetTarget(unsigned int itemId, ZuiAnimationSlot slot, float target)
+    {
+        ZuiAnimationData *a = ZuiGetAnimationMut(itemId);
+        if (!a)
+        {
+            a = ZuiAddAnimation(itemId);
+        }
+
+        if (a && slot < 8)
+        {
+            a->slots[slot].target = target;
+            if (!a->slots[slot].active)
+            {
+                a->slots[slot].active = true;
+                a->activeCount++;
+            }
+        }
+    }
+
+    float ZuiAnimGetValue(unsigned int itemId, ZuiAnimationSlot slot)
+    {
+        const ZuiAnimationData *a = ZuiGetAnimation(itemId);
+        if (a && slot < 8)
+        {
+            return a->slots[slot].value;
+        }
+        return 0.0F;
+    }
+
+    void ZuiAnimSetDuration(unsigned int itemId, ZuiAnimationSlot slot, float duration)
+    {
+        ZuiAnimationData *a = ZuiGetAnimationMut(itemId);
+        if (a && slot < 8)
+        {
+            a->slots[slot].duration = duration;
+        }
+    }
+
+    void ZuiAnimSetSpring(unsigned int itemId, ZuiAnimationSlot slot, float damping, float stiffness)
+    {
+        ZuiAnimationData *a = ZuiGetAnimationMut(itemId);
+        if (a && slot < 8)
+        {
+            a->slots[slot].type = ZUI_ANIM_SPRING;
+            a->slots[slot].damping = damping;
+            a->slots[slot].stiffness = stiffness;
+        }
+    }
+
+    void ZuiAnimSetType(unsigned int itemId, ZuiAnimationSlot slot, ZuiAnimationType type)
+    {
+        ZuiAnimationData *a = ZuiGetAnimationMut(itemId);
+        if (a && slot < 8)
+        {
+            a->slots[slot].type = type;
+        }
+    }
+
+    void ZuiAnimReset(unsigned int itemId, ZuiAnimationSlot slot, float value)
+    {
+        ZuiAnimationData *a = ZuiGetAnimationMut(itemId);
+        if (a && slot < 8)
+        {
+            a->slots[slot].value = value;
+            a->slots[slot].target = value;
+            a->slots[slot].velocity = 0.0F;
+            a->slots[slot].elapsed = 0.0F;
+            a->slots[slot].active = false;
+        }
+    }
+
+    //-------------------------------------- INTERACTION IMPLEMENTATION
+
+    ZuiInteractionData *ZuiGetInteractionMut(unsigned int itemId)
+    {
+        return (ZuiInteractionData *)ZuiItemGetComponent(itemId, ZUI_COMPONENT_INTERACTION);
+    }
+
+    const ZuiInteractionData *ZuiGetInteraction(unsigned int itemId)
+    {
+        return (const ZuiInteractionData *)ZuiItemGetComponentConst(itemId, ZUI_COMPONENT_INTERACTION);
+    }
+
+    ZuiInteractionData *ZuiAddInteraction(unsigned int itemId)
+    {
+        return (ZuiInteractionData *)ZuiItemAddComponent(itemId, ZUI_COMPONENT_INTERACTION);
+    }
+
+    void ZuiEnableInteraction(unsigned int itemId)
+    {
+        const ZuiInteractionData *i = ZuiGetInteraction(itemId);
+        if (!i)
+        {
+            (void)ZuiAddInteraction(itemId);
+        }
+    }
+
+    void ZuiSetHoverCallback(unsigned int itemId, void (*onHover)(unsigned int))
+    {
+        ZuiInteractionData *i = ZuiGetInteractionMut(itemId);
+        if (i)
+        {
+            i->onHoverEnter = onHover;
+        }
+    }
+
+    void ZuiSetClickCallback(unsigned int itemId, void (*onClick)(unsigned int, ZuiMouseButton))
+    {
+        ZuiInteractionData *i = ZuiGetInteractionMut(itemId);
+        if (i)
+        {
+            i->onClick = onClick;
+        }
+    }
+
+    bool ZuiIsItemHovered(unsigned int itemId)
+    {
+        const ZuiInteractionData *i = ZuiGetInteraction(itemId);
+        return i ? i->isHovered : false;
+    }
+
+    bool ZuiIsItemPressed(unsigned int itemId)
+    {
+        const ZuiInteractionData *i = ZuiGetInteraction(itemId);
+        return i ? i->isPressed : false;
+    }
+
+    bool ZuiIsItemFocused(unsigned int itemId)
+    {
+        const ZuiInteractionData *i = ZuiGetInteraction(itemId);
+        return i ? i->isFocused : false;
+    }
+
+    //-------------------------------------- STYLE IMPLEMENTATION
+
+    ZuiStyleData *ZuiGetStyleMut(unsigned int itemId)
+    {
+        return (ZuiStyleData *)ZuiItemGetComponent(itemId, ZUI_COMPONENT_STYLE);
+    }
+
+    const ZuiStyleData *ZuiGetStyle(unsigned int itemId)
+    {
+        return (const ZuiStyleData *)ZuiItemGetComponentConst(itemId, ZUI_COMPONENT_STYLE);
+    }
+
+    ZuiStyleData *ZuiAddStyle(unsigned int itemId)
+    {
+        return (ZuiStyleData *)ZuiItemAddComponent(itemId, ZUI_COMPONENT_STYLE);
+    }
+
+    void ZuiSetBackgroundColor(unsigned int itemId, Color normal, Color hovered, Color pressed)
+    {
+        ZuiStyleData *s = ZuiGetStyleMut(itemId);
+        if (!s)
+        {
+            s = ZuiAddStyle(itemId);
+        }
+
+        if (s)
+        {
+            s->background.normal = normal;
+            s->background.hovered = hovered;
+            s->background.pressed = pressed;
+        }
+    }
+
+    void ZuiSetBorderStyle(unsigned int itemId, float thickness, float radius, Color color)
+    {
+        ZuiStyleData *s = ZuiGetStyleMut(itemId);
+        if (!s)
+        {
+            s = ZuiAddStyle(itemId);
+        }
+
+        if (s)
+        {
+            s->borderNormal = (ZuiBorderStyle){
+                .thickness = thickness,
+                .radius = radius,
+                .color = color,
+                .enabled = true};
+        }
+    }
+
+    void ZuiSetTextStyle(unsigned int itemId, Font font, float size, Color color)
+    {
+        ZuiStyleData *s = ZuiGetStyleMut(itemId);
+        if (!s)
+        {
+            s = ZuiAddStyle(itemId);
+        }
+
+        if (s)
+        {
+            s->font = font;
+            s->fontSize = size;
+            s->textColor = color;
+            s->useCustomFont = true;
+        }
+    }
+
+    void ZuiApplyTheme(unsigned int itemId, const char *themeName)
+    {
+        ZuiStyleData *s = ZuiGetStyleMut(itemId);
+        if (!s)
+        {
+            s = ZuiAddStyle(itemId);
+        }
+
+        if (s)
+        {
+            s->themeOverride = themeName;
+        }
+    }
+
+    //-------------------------------------- STATE IMPLEMENTATION
+
+    ZuiStateData *ZuiGetStateMut(unsigned int itemId)
+    {
+        return (ZuiStateData *)ZuiItemGetComponent(itemId, ZUI_COMPONENT_STATE);
+    }
+
+    const ZuiStateData *ZuiGetState(unsigned int itemId)
+    {
+        return (const ZuiStateData *)ZuiItemGetComponentConst(itemId, ZUI_COMPONENT_STATE);
+    }
+
+    ZuiStateData *ZuiAddState(unsigned int itemId)
+    {
+        return (ZuiStateData *)ZuiItemAddComponent(itemId, ZUI_COMPONENT_STATE);
+    }
+
+    void ZuiSetEnabled(unsigned int itemId, bool enabled)
+    {
+        ZuiStateData *s = ZuiGetStateMut(itemId);
+        if (!s)
+        {
+            s = ZuiAddState(itemId);
+        }
+
+        if (s)
+        {
+            s->isEnabled = enabled;
+        }
+    }
+
+    void ZuiSetVisible(unsigned int itemId, bool visible)
+    {
+        ZuiStateData *s = ZuiGetStateMut(itemId);
+        if (!s)
+        {
+            s = ZuiAddState(itemId);
+        }
+
+        if (s)
+        {
+            s->isVisible = visible;
+        }
+    }
+
+    void ZuiSetReadOnly(unsigned int itemId, bool readOnly)
+    {
+        ZuiStateData *s = ZuiGetStateMut(itemId);
+        if (!s)
+        {
+            s = ZuiAddState(itemId);
+        }
+
+        if (s)
+        {
+            s->isReadOnly = readOnly;
+        }
+    }
+
+    void ZuiSetValidationState(unsigned int itemId, ZuiValidationState state, const char *message)
+    {
+        ZuiStateData *s = ZuiGetStateMut(itemId);
+        if (!s)
+        {
+            s = ZuiAddState(itemId);
+        }
+
+        if (s)
+        {
+            s->validationState = state;
+            if (message)
+            {
+                snprintf(s->validationMessage, sizeof(s->validationMessage), "%s", message);
+            }
+        }
+    }
+
+    bool ZuiIsEnabled(unsigned int itemId)
+    {
+        const ZuiStateData *s = ZuiGetState(itemId);
+        return s ? s->isEnabled : true;
+    }
+
+    bool ZuiIsVisible(unsigned int itemId)
+    {
+        const ZuiStateData *s = ZuiGetState(itemId);
+        return s ? s->isVisible : true;
+    }
+
+    // SYSTEM UPDATE FUNCTIONS
+
+    static bool ZuiCheckHitTest(unsigned int itemId, Vector2 point)
+    {
+        Rectangle bounds = ZuiGetTransformBounds(itemId);
+        return CheckCollisionPointRec(point, bounds);
+    }
+
+    void ZuiUpdateInteractions(float deltaTime)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
             return;
         }
 
-        ZuiFrameData *frameData = ZuiGetFrameDataMut(g_zui_ctx->cursor.activeFrame);
-        if (frameData)
+        Vector2 mousePos = GetMousePosition();
+
+        for (unsigned int i = 0; i < g_zui_ctx->items.count; i++)
         {
-            frameData->backgroundColor = color;
-            frameData->hasBackground = (color.a > 0);
+            const ZuiItem *item = ZuiGetItem(i);
+            if (!item || !ZuiItemHasComponent(i, ZUI_COMPONENT_INTERACTION))
+            {
+                continue;
+            }
+
+            ZuiInteractionData *interaction = ZuiGetInteractionMut(i);
+            if (!interaction)
+            {
+                continue;
+            }
+
+            interaction->wasHovered = interaction->isHovered;
+            interaction->wasPressed = interaction->isPressed;
+            interaction->isHovered = ZuiCheckHitTest(i, mousePos);
+            interaction->mousePosition = mousePos;
+
+            if (interaction->isHovered && !interaction->wasHovered)
+            {
+                interaction->hoverTime = 0.0F;
+                if (interaction->onHoverEnter)
+                {
+                    interaction->onHoverEnter(i);
+                }
+                ZuiAnimSetTarget(i, ZUI_ANIM_SLOT_HOVER, 1.0F);
+            }
+            else if (!interaction->isHovered && interaction->wasHovered)
+            {
+                if (interaction->onHoverExit)
+                {
+                    interaction->onHoverExit(i);
+                }
+                ZuiAnimSetTarget(i, ZUI_ANIM_SLOT_HOVER, 0.0F);
+            }
+
+            if (interaction->isHovered)
+            {
+                interaction->hoverTime += deltaTime;
+            }
+
+            if (interaction->isHovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                interaction->isPressed = true;
+                interaction->pressTime = 0.0F;
+                interaction->pressedButton = ZUI_MOUSE_LEFT;
+                ZuiAnimSetTarget(i, ZUI_ANIM_SLOT_PRESS, 1.0F);
+
+                if (interaction->onPress)
+                {
+                    interaction->onPress(i, ZUI_MOUSE_LEFT);
+                }
+            }
+
+            if (interaction->isPressed)
+            {
+                interaction->pressTime += deltaTime;
+            }
+
+            if (interaction->isPressed && IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+            {
+                interaction->isPressed = false;
+                ZuiAnimSetTarget(i, ZUI_ANIM_SLOT_PRESS, 0.0F);
+
+                if (interaction->onRelease)
+                {
+                    interaction->onRelease(i, interaction->pressedButton);
+                }
+
+                if (interaction->isHovered && interaction->onClick)
+                {
+                    interaction->onClick(i, interaction->pressedButton);
+                }
+            }
         }
     }
 
-    void ZuiFrameOutline(const Color color, const float thickness)
+    void ZuiUpdateAnimations(float deltaTime)
     {
-        if (!g_zui_ctx)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
             return;
         }
 
-        ZuiFrameData *frameData = ZuiGetFrameDataMut(g_zui_ctx->cursor.activeFrame);
-        if (frameData)
+        for (unsigned int i = 0; i < g_zui_ctx->items.count; i++)
         {
-            frameData->outlineColor = color;
-            frameData->outlineThickness = thickness;
-            frameData->hasOutline = (color.a > 0);
+            if (!ZuiItemHasComponent(i, ZUI_COMPONENT_ANIMATION))
+            {
+                continue;
+            }
+
+            ZuiAnimationData *animData = ZuiGetAnimationMut(i);
+            if (!animData)
+            {
+                continue;
+            }
+
+            for (unsigned int j = 0; j < 8; j++)
+            {
+                ZuiAnimation *anim = &animData->slots[j];
+                if (!anim->active)
+                {
+                    continue;
+                }
+
+                float delta = anim->target - anim->value;
+
+                if (fabsf(delta) < 0.001F && fabsf(anim->velocity) < 0.001F)
+                {
+                    anim->value = anim->target;
+                    anim->velocity = 0.0F;
+                    anim->active = false;
+                    animData->activeCount--;
+                    continue;
+                }
+
+                switch (anim->type)
+                {
+                case ZUI_ANIM_LINEAR:
+                {
+                    float speed = 1.0F / anim->duration;
+                    float step = speed * deltaTime;
+                    if (fabsf(delta) < step)
+                    {
+                        anim->value = anim->target;
+                    }
+                    else
+                    {
+                        anim->value += (delta > 0.0F ? step : -step);
+                    }
+                    break;
+                }
+
+                case ZUI_ANIM_EASE_OUT:
+                {
+                    float t = 1.0F - powf(0.001F, deltaTime / anim->duration);
+                    anim->value += delta * t;
+                    break;
+                }
+
+                case ZUI_ANIM_SPRING:
+                {
+                    float force = (anim->stiffness * delta) - (anim->damping * anim->velocity);
+                    anim->velocity += force * deltaTime;
+                    anim->value += anim->velocity * deltaTime;
+                    break;
+                }
+                }
+
+                anim->elapsed += deltaTime;
+            }
         }
     }
 
-    void ZuiFrameGap(const float gap)
+    //-------------------------------------- LAYER IMPLEMENTATION
+
+    ZuiLayerData *ZuiGetLayerMut(unsigned int itemId)
     {
-        if (!g_zui_ctx)
+        return (ZuiLayerData *)ZuiItemGetComponent(itemId, ZUI_COMPONENT_LAYER);
+    }
+
+    const ZuiLayerData *ZuiGetLayer(unsigned int itemId)
+    {
+        return (const ZuiLayerData *)ZuiItemGetComponentConst(itemId, ZUI_COMPONENT_LAYER);
+    }
+
+    ZuiLayerData *ZuiAddLayer(unsigned int itemId)
+    {
+        return (ZuiLayerData *)ZuiItemAddComponent(itemId, ZUI_COMPONENT_LAYER);
+    }
+
+    void ZuiSetLayer(unsigned int itemId, int layer, int order)
+    {
+        ZuiLayerData *l = ZuiGetLayerMut(itemId);
+        if (!l)
+        {
+            l = ZuiAddLayer(itemId);
+        }
+
+        if (l)
+        {
+            l->layer = layer;
+            l->order = order;
+        }
+    }
+
+    void ZuiSetLayerPreset(unsigned int itemId, ZuiLayerPreset preset)
+    {
+        ZuiLayerData *l = ZuiGetLayerMut(itemId);
+        if (!l)
+        {
+            l = ZuiAddLayer(itemId);
+        }
+
+        if (l)
+        {
+            l->layer = (int)preset;
+            l->order = 0;
+        }
+    }
+
+    void ZuiSetLayerBlocksInput(unsigned int itemId, bool blocks)
+    {
+        ZuiLayerData *l = ZuiGetLayerMut(itemId);
+        if (!l)
+        {
+            l = ZuiAddLayer(itemId);
+        }
+
+        if (l)
+        {
+            l->blocksInput = blocks;
+        }
+    }
+
+    void ZuiRaiseToFront(unsigned int itemId)
+    {
+        ZuiLayerData *l = ZuiGetLayerMut(itemId);
+        if (!l)
+        {
+            l = ZuiAddLayer(itemId);
+        }
+
+        if (!l)
         {
             return;
         }
 
-        ZuiFrameData *frameData = ZuiGetFrameDataMut(g_zui_ctx->cursor.activeFrame);
-        if (frameData)
+        // Find max order in same layer
+        int maxOrder = l->order;
+
+        if (g_zui_ctx)
         {
-            frameData->gap = gap;
+            for (unsigned int i = 0; i < g_zui_ctx->items.count; i++)
+            {
+                if (i == itemId)
+                {
+                    continue;
+                }
+
+                const ZuiLayerData *other = ZuiGetLayer(i);
+                if (other && other->layer == l->layer && other->order > maxOrder)
+                {
+                    maxOrder = other->order;
+                }
+            }
         }
+
+        l->order = maxOrder + 1;
     }
 
-    void ZuiFramePad(const float pad)
+    void ZuiLowerToBack(unsigned int itemId)
     {
-        if (!g_zui_ctx)
+        ZuiLayerData *l = ZuiGetLayerMut(itemId);
+        if (!l)
+        {
+            l = ZuiAddLayer(itemId);
+        }
+
+        if (!l)
         {
             return;
         }
 
-        ZuiFrameData *frameData = ZuiGetFrameDataMut(g_zui_ctx->cursor.activeFrame);
-        if (frameData)
+        // Find min order in same layer
+        int minOrder = l->order;
+
+        if (g_zui_ctx)
         {
-            frameData->padding = pad;
-            g_zui_ctx->cursor.position = (Vector2){frameData->bounds.x + pad, frameData->bounds.y + pad};
-            g_zui_ctx->cursor.restPosition = g_zui_ctx->cursor.position;
-            g_zui_ctx->cursor.tempRestPosition = g_zui_ctx->cursor.position;
+            for (unsigned int i = 0; i < g_zui_ctx->items.count; i++)
+            {
+                if (i == itemId)
+                {
+                    continue;
+                }
+
+                const ZuiLayerData *other = ZuiGetLayer(i);
+                if (other && other->layer == l->layer && other->order < minOrder)
+                {
+                    minOrder = other->order;
+                }
+            }
         }
+
+        l->order = minOrder - 1;
     }
 
-    void ZuiFrameOffset(const float x, const float y)
+    int ZuiGetLayerValue(unsigned int itemId)
     {
-        if (!g_zui_ctx)
-        {
-            return;
-        }
-
-        ZuiFrameData *frameData = ZuiGetFrameDataMut(g_zui_ctx->cursor.activeFrame);
-        if (frameData)
-        {
-            frameData->bounds.x += x;
-            frameData->bounds.y += y;
-        }
+        const ZuiLayerData *l = ZuiGetLayer(itemId);
+        return l ? l->layer : ZUI_LAYER_CONTENT;
     }
-// -----------------------------------------------------------------------------
-// zui_item.c
-#include "raylib.h"
+
+    int ZuiGetLayerOrder(unsigned int itemId)
+    {
+        const ZuiLayerData *l = ZuiGetLayer(itemId);
+        return l ? l->order : 0;
+    }
+
+    bool ZuiLayerBlocksInput(unsigned int itemId)
+    {
+        const ZuiLayerData *l = ZuiGetLayer(itemId);
+        return l ? l->blocksInput : false;
+    }
+    // -----------------------------------------------------------------------------
+    // zui_item.c
 
     const ZuiItem *ZuiGetItem(unsigned int id)
     {
-        if (!g_zui_ctx)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
             return NULL;
         }
 
@@ -2658,9 +4098,8 @@ extern "C"
 
     ZuiItem *ZuiGetItemMut(unsigned int id)
     {
-        if (!g_zui_ctx)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
             return NULL;
         }
 
@@ -2684,7 +4123,7 @@ extern "C"
             return ZUI_ERROR_INVALID_ID;
         }
 
-        if (!parent->hasChildren)
+        if (!(parent->isContainer))
         {
             ZUI_REPORT_ERROR(ZUI_ERROR_CIRCULAR_REFERENCE,
                              "Item type %s is not a container", ZuiGetWidgetType(parent->type));
@@ -2706,9 +4145,8 @@ extern "C"
 
     unsigned int ZuiCreateItem(const ZuiItemType type, const unsigned int dataIndex)
     {
-        if (!g_zui_ctx)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
             return ZUI_ID_INVALID;
         }
 
@@ -2726,12 +4164,10 @@ extern "C"
             .parentId = ZUI_ID_INVALID,
             .type = type,
             .dataIndex = dataIndex,
-            .renderFunction = NULL,
-            .updateFunction = NULL,
             .children = (ZuiDynArray){0},
-            .hasChildren = false,
-            .isVisible = true,
-            .isInsideWindow = false,
+            .componentCount = 0,
+            .isContainer = false,
+            .canMove = false,
         };
 
         return item_id;
@@ -2750,9 +4186,8 @@ extern "C"
         TraceLog(LOG_INFO, "│  Item ID:    %u", item->id);
         TraceLog(LOG_INFO, "│  Type:       %s", ZuiGetWidgetType(item->type));
         TraceLog(LOG_INFO, "│  Parent ID:  %u", item->parentId);
-        TraceLog(LOG_INFO, "│  Visible:    %s", item->isVisible ? "true" : "false");
 
-        if (item->hasChildren)
+        if (item->isContainer)
         {
             TraceLog(LOG_INFO, "│  Children:   %u / %u",
                      item->children.count, item->children.capacity);
@@ -2790,11 +4225,10 @@ extern "C"
             TraceLog(LOG_INFO, "  ");
         }
 
-        TraceLog(LOG_INFO, "├─ Item %u: %s (parent: %u, visible: %s)",
+        TraceLog(LOG_INFO, "├─ Item %u: %s (parent: %u)",
                  item->id,
                  ZuiGetWidgetType(item->type),
-                 item->parentId,
-                 item->isVisible ? "yes" : "no");
+                 item->parentId);
 
         if (item->children.count > 0)
         {
@@ -2808,91 +4242,10 @@ extern "C"
         }
     }
 
-    void ZuiPrintItemTreeData(const unsigned int id, const int depth)
+    void ZuiPrintFullItemTree(void)
     {
-        const ZuiItem *item = ZuiGetItem(id);
-        if (!item)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
-            return;
-        }
-
-        // Print indentation
-        for (int i = 0; i < depth; i++)
-        {
-            TraceLog(LOG_INFO, "  ");
-        }
-
-        // Print item info
-        TraceLog(LOG_INFO, "├─ Item %u: %s (parent: %u, visible: %s)",
-                 item->id,
-                 ZuiGetWidgetType(item->type),
-                 item->parentId,
-                 item->isVisible ? "yes" : "no");
-
-        // Print type-specific data with extra indentation
-        for (int i = 0; i < depth + 1; i++)
-        {
-            TraceLog(LOG_INFO, "  ");
-        }
-
-        switch (item->type)
-        {
-        case ZUI_FRAME:
-        {
-            const ZuiFrameData *frame = ZuiGetFrameData(id);
-            if (frame)
-            {
-                TraceLog(LOG_INFO, "│  Frame: bounds=(%.0f,%.0f,%.0fx%.0f) pad=%.0f gap=%.0f",
-                         (double)frame->bounds.x, (double)frame->bounds.y,
-                         (double)frame->bounds.width, (double)frame->bounds.height,
-                         (double)frame->padding, (double)frame->gap);
-            }
-            break;
-        }
-        case ZUI_LABEL:
-        {
-            const ZuiLabelData *label = ZuiGetLabelData(id);
-            if (label)
-            {
-                TraceLog(LOG_INFO, "│  Label: \"%s\" size=%.0f pos=(%.0f,%.0f)",
-                         label->text, (double)label->fontSize,
-                         (double)label->bounds.x, (double)label->bounds.y);
-            }
-            break;
-        }
-        case ZUI_TEXTURE:
-        {
-            const ZuiTextureData *texture = ZuiGetTextureData(id);
-            if (texture)
-            {
-                TraceLog(LOG_INFO, "│  Texture: %dx%d %s pos=(%.0f,%.0f)",
-                         texture->texture.width, texture->texture.height,
-                         texture->isPatch ? "patch" : "normal",
-                         (double)texture->bounds.x, (double)texture->bounds.y);
-            }
-            break;
-        }
-        default:
-            TraceLog(LOG_INFO, "│  (unknown type)");
-            break;
-        }
-
-        // Recursively print children
-        if (item->hasChildren && item->children.count > 0)
-        {
-            const unsigned int *childIds = (unsigned int *)item->children.items;
-            for (unsigned int i = 0; i < item->children.count; i++)
-            {
-                ZuiPrintItemTreeData(childIds[i], depth + 1);
-            }
-        }
-    }
-
-    void ZuiPrintFullItemTree(bool withData)
-    {
-        if (!g_zui_ctx)
-        {
-            TraceLog(LOG_ERROR, "ZUI context not initialized");
             return;
         }
 
@@ -2904,137 +4257,1092 @@ extern "C"
         {
             for (unsigned int i = 0; i < g_zui_ctx->items.count - 1; ++i)
             {
-                if (withData)
-                {
-                    ZuiPrintItemTreeData(i, 0);
-                }
-                else
-                {
-                    ZuiPrintItemTree(i, 0);
-                }
+
+                ZuiPrintItemTree(i, 0);
             }
         }
 
         TraceLog(LOG_INFO, "================================================");
     }
-// -----------------------------------------------------------------------------
-// zui_label.c
-#include "raylib.h"
+    // -----------------------------------------------------------------------------
+    // zui_type_registry.c
 
-    const ZuiLabelData *ZuiGetLabelData(const unsigned int itemId)
+    ZuiResult ZuiInitTypeRegistry(void)
     {
-        const ZuiItem *item = ZuiGetItem(itemId);
-        if (!item || item->type != ZUI_LABEL)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return ZUI_ERROR_NULL_CONTEXT;
+        }
+
+        ZuiTypeRegistry *registry = &g_zui_ctx->typeRegistry;
+
+        ZuiResult result = ZuiInitDynArray(
+            &registry->registrations,
+            &g_zui_arena,
+            16,
+            sizeof(ZuiTypeRegistration),
+            ZUI_ALIGNOF(ZuiTypeRegistration),
+            "TypeRegistrations");
+
+        if (result != ZUI_OK)
+        {
+            ZUI_REPORT_ERROR(result, "Failed to init type registry");
+            return result;
+        }
+
+        registry->nextTypeId = 0;
+
+#ifdef ZUI_DEBUG
+        TraceLog(LOG_INFO, "ZUI: Type registry initialized");
+#endif
+
+        return ZUI_OK;
+    }
+
+    unsigned int ZuiRegisterType(const ZuiTypeInfo *typeInfo)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return ZUI_ID_INVALID;
+        }
+        if (!typeInfo || !typeInfo->name)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_POINTER, "TypeInfo or name is NULL");
+            return ZUI_ID_INVALID;
+        }
+        if (typeInfo->dataSize == 0)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_VALUE, "Data size must be > 0");
+            return ZUI_ID_INVALID;
+        }
+        if (!ZuiIsPowerOfTwo(typeInfo->dataAlignment))
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_ALIGNMENT, "Data alignment must be power of 2");
+            return ZUI_ID_INVALID;
+        }
+        if (!typeInfo->render)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_POINTER, "Render function is required");
+            return ZUI_ID_INVALID;
+        }
+
+        ZuiTypeRegistry *registry = &g_zui_ctx->typeRegistry;
+
+        // Check for duplicate name
+        for (unsigned int i = 0; i < registry->registrations.count; i++)
+        {
+            const ZuiTypeRegistration *reg = (ZuiTypeRegistration *)ZuiGetDynArray(&registry->registrations, i);
+            if (!reg)
+            {
+                continue;
+            }
+            if (strcmp(reg->info.name, typeInfo->name) == 0)
+            {
+                ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_VALUE, "Type '%s' already registered", typeInfo->name);
+                return ZUI_ID_INVALID;
+            }
+        }
+
+        ZuiTypeRegistration *reg = (ZuiTypeRegistration *)ZuiPushDynArray(&registry->registrations, &g_zui_arena);
+        if (!reg)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_MEMORY, "Failed to allocate type registration");
+            return ZUI_ID_INVALID;
+        }
+
+        *reg = (ZuiTypeRegistration){
+            .info = *typeInfo,
+            .typeId = registry->nextTypeId++,
+            .isBuiltin = false,
+        };
+
+        const unsigned int capacity = typeInfo->initialCapacity > 0 ? typeInfo->initialCapacity : 32;
+        ZuiResult result = ZuiInitDynArray(&reg->dataArray, &g_zui_arena, capacity,
+                                           typeInfo->dataSize, typeInfo->dataAlignment, typeInfo->name);
+        if (result != ZUI_OK)
+        {
+            ZUI_REPORT_ERROR(result, "Failed to init data array for type '%s'", typeInfo->name);
+            registry->registrations.count--;
+            return ZUI_ID_INVALID;
+        }
+
+#ifdef ZUI_DEBUG
+        TraceLog(LOG_INFO, "ZUI: Registered type '%s' with ID %u", typeInfo->name, reg->typeId);
+#endif
+        return reg->typeId;
+    }
+
+    ZuiTypeRegistration *ZuiGetTypeRegistration(unsigned int typeId)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
             return NULL;
         }
 
-        unsigned int dataIndex = (unsigned int)(uintptr_t)item->dataIndex;
-        return (ZuiLabelData *)ZuiGetDynArray(&g_zui_ctx->labelData, dataIndex);
+        ZuiTypeRegistry *registry = &g_zui_ctx->typeRegistry;
+
+        for (unsigned int i = 0; i < registry->registrations.count; i++)
+        {
+            ZuiTypeRegistration *reg = (ZuiTypeRegistration *)ZuiGetDynArray(&registry->registrations, i);
+            if (reg && reg->typeId == typeId)
+            {
+                return reg;
+            }
+        }
+
+        return NULL;
     }
 
-    ZuiLabelData *ZuiGetLabelDataMut(const unsigned int itemId)
+    const ZuiTypeRegistration *ZuiGetTypeRegistrationConst(unsigned int typeId)
+    {
+        return ZuiGetTypeRegistration(typeId);
+    }
+
+    const ZuiTypeInfo *ZuiGetTypeInfo(unsigned int typeId)
+    {
+        const ZuiTypeRegistration *reg = ZuiGetTypeRegistrationConst(typeId);
+        return reg ? &reg->info : NULL;
+    }
+
+    unsigned int ZuiGetTypeIdByName(const char *name)
+    {
+        if (!g_zui_ctx || !name)
+        {
+            return ZUI_ID_INVALID;
+        }
+
+        ZuiTypeRegistry *registry = &g_zui_ctx->typeRegistry;
+
+        for (unsigned int i = 0; i < registry->registrations.count; i++)
+        {
+            ZuiTypeRegistration *reg = (ZuiTypeRegistration *)ZuiGetDynArray(&registry->registrations, i);
+            if (reg && strcmp(reg->info.name, name) == 0)
+            {
+                return reg->typeId;
+            }
+        }
+
+        return ZUI_ID_INVALID;
+    }
+
+    bool ZuiIsValidTypeId(unsigned int typeId)
+    {
+        return ZuiGetTypeRegistration(typeId) != NULL;
+    }
+
+    unsigned int ZuiCreateTypedItem(unsigned int typeId)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return ZUI_ID_INVALID;
+        }
+
+        ZuiTypeRegistration *reg = ZuiGetTypeRegistration(typeId);
+        if (!reg)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_ID, "Invalid type ID %u", typeId);
+            return ZUI_ID_INVALID;
+        }
+
+        void *data = ZuiPushDynArray(&reg->dataArray, &g_zui_arena);
+        if (!data)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_MEMORY, "Failed to allocate data for type '%s'", reg->info.name);
+            return ZUI_ID_INVALID;
+        }
+
+        unsigned int dataIndex = reg->dataArray.count - 1;
+
+        ZuiItem *item = (ZuiItem *)ZuiPushDynArray(&g_zui_ctx->items, &g_zui_arena);
+        if (!item)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_MEMORY, "Failed to allocate item");
+            reg->dataArray.count--;
+            return ZUI_ID_INVALID;
+        }
+
+        unsigned int itemId = g_zui_ctx->items.count - 1;
+
+        *item = (ZuiItem){
+            .id = itemId,
+            .parentId = ZUI_ID_INVALID,
+            .type = typeId,
+            .dataIndex = dataIndex,
+            .children = (ZuiDynArray){0},
+            .isContainer = false,
+            .canMove = false,
+        };
+
+        if (reg->info.init)
+        {
+            reg->info.init(data, itemId);
+        }
+
+        return itemId;
+    }
+
+    void *ZuiGetTypedData(unsigned int itemId)
     {
         const ZuiItem *item = ZuiGetItem(itemId);
-        if (!item || item->type != ZUI_LABEL)
+        if (!item)
         {
             return NULL;
         }
 
-        unsigned int dataIndex = (unsigned int)(uintptr_t)item->dataIndex;
-        return (ZuiLabelData *)ZuiGetDynArray(&g_zui_ctx->labelData, dataIndex);
+        ZuiTypeRegistration *reg = ZuiGetTypeRegistration(item->type);
+        if (!reg)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_ID, "Invalid type ID %u for item %u", item->type, itemId);
+            return NULL;
+        }
+
+        if (item->dataIndex >= reg->dataArray.count)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_BOUNDS, "Data index %u out of bounds", item->dataIndex);
+            return NULL;
+        }
+
+        return ZuiGetDynArray(&reg->dataArray, item->dataIndex);
     }
 
-    unsigned int ZuiCreateLabel(const char *text, const Font font)
+    const void *ZuiGetTypedDataConst(unsigned int itemId)
+    {
+        return ZuiGetTypedData(itemId);
+    }
+    // -----------------------------------------------------------------------------
+    // zui_behavior.c
+
+    void ZuiDispatchUpdate(const ZuiItem *item)
+    {
+        if (!item)
+        {
+            return;
+        }
+
+        const ZuiTypeRegistration *reg = ZuiGetTypeRegistrationConst(item->type);
+        if (!reg)
+        {
+            return;
+        }
+
+        if (reg->info.update)
+        {
+            reg->info.update(item->dataIndex);
+        }
+    }
+
+    void ZuiDispatchRender(const ZuiItem *item)
+    {
+        if (!item)
+        {
+            return;
+        }
+
+        const ZuiTypeRegistration *reg = ZuiGetTypeRegistrationConst(item->type);
+        if (!reg)
+        {
+            return;
+        }
+
+        if (reg->info.render)
+        {
+            reg->info.render(item->dataIndex);
+        }
+    }
+    // -----------------------------------------------------------------------------
+    // zui_frame.c (enhanced)
+
+    const ZuiFrameData *ZuiGetFrameData(unsigned int itemId)
+    {
+        const ZuiItem *item = ZuiGetItem(itemId);
+        if (!item || item->type != ZUI_BUILTIN_FRAME)
+        {
+            return NULL;
+        }
+        return (const ZuiFrameData *)ZuiGetTypedDataConst(itemId);
+    }
+
+    ZuiFrameData *ZuiGetFrameDataMut(unsigned int itemId)
+    {
+        const ZuiItem *item = ZuiGetItem(itemId);
+        if (!item || item->type != ZUI_BUILTIN_FRAME)
+        {
+            return NULL;
+        }
+        return (ZuiFrameData *)ZuiGetTypedData(itemId);
+    }
+
+    unsigned int ZuiCreateFrame(Rectangle bounds, Color color)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return ZUI_ID_INVALID;
+        }
+        if (!ZuiValidateBounds(bounds))
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_BOUNDS, "Invalid bounds");
+            return ZUI_ID_INVALID;
+        }
+
+        // Create item
+        unsigned int itemId = ZuiCreateTypedItem(ZUI_BUILTIN_FRAME);
+        if (itemId == ZUI_ID_INVALID)
+        {
+            return ZUI_ID_INVALID;
+        }
+
+        // Initialize frame data
+        ZuiFrameData *frameData = ZuiGetFrameDataMut(itemId);
+        if (!frameData)
+        {
+            return ZUI_ID_INVALID;
+        }
+
+        *frameData = (ZuiFrameData){
+            .itemId = itemId,
+            .cornerRadius = (float)ZUI_CORNER_RADIUS,
+            .hasShadow = false,
+        };
+
+        // Add Transform component
+        ZuiTransform *transform = (ZuiTransform *)ZuiItemAddComponent(itemId, ZUI_COMPONENT_TRANSFORM);
+        if (!transform)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_MEMORY, "Failed to add transform component");
+            return ZUI_ID_INVALID;
+        }
+        *transform = (ZuiTransform){
+            .itemId = itemId,
+            .bounds = bounds,
+            .offset = (Vector2){0, 0},
+            .isDirty = false,
+        };
+
+        // Add Style component
+        ZuiStyleData *style = ZuiAddStyle(itemId);
+        if (style)
+        {
+            style->background.normal = color;
+            style->borderNormal.enabled = false;
+            style->borderNormal.thickness = 0.0F;
+            style->borderNormal.color = BLACK;
+            style->borderNormal.radius = frameData->cornerRadius;
+        }
+
+        // Add State component
+        ZuiStateData *state = ZuiAddState(itemId);
+        if (state)
+        {
+            state->isVisible = true;
+            state->isEnabled = true;
+        }
+
+        // Add Layer component
+        ZuiLayerData *layer = ZuiAddLayer(itemId);
+        if (layer)
+        {
+            layer->layer = ZUI_LAYER_CONTENT;
+            layer->order = 0;
+            layer->blocksInput = false;
+        }
+
+        // Add Animation component (for smooth size/position changes)
+        const ZuiAnimationData *anim = ZuiAddAnimation(itemId);
+        if (anim)
+        {
+            ZuiAnimSetType(itemId, ZUI_ANIM_SLOT_ALPHA, ZUI_ANIM_EASE_OUT);
+            ZuiAnimSetDuration(itemId, ZUI_ANIM_SLOT_ALPHA, 0.2F);
+            ZuiAnimReset(itemId, ZUI_ANIM_SLOT_ALPHA, 1.0F);
+        }
+
+        // Setup as container
+        ZuiItem *item = ZuiGetItemMut(itemId);
+        if (!item)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INTERNAL_ERROR, "Failed to get item");
+            return ZUI_ID_INVALID;
+        }
+
+        item->isContainer = true;
+        ZuiResult result = ZuiInitDynArray(&item->children, &g_zui_arena,
+                                           ZUI_CHILDREN_CAPACITY, sizeof(unsigned int),
+                                           _Alignof(unsigned int), "Children");
+        if (result != ZUI_OK)
+        {
+            ZUI_REPORT_ERROR(result, "Failed to initialize children");
+            return ZUI_ID_INVALID;
+        }
+
+        return itemId;
+    }
+
+    void ZuiUpdateFrame(unsigned int dataIndex)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        ZuiTypeRegistration *reg = ZuiGetTypeRegistration(ZUI_BUILTIN_FRAME);
+        if (!reg)
+        {
+            return;
+        }
+
+        const ZuiFrameData *frameData = (const ZuiFrameData *)ZuiGetDynArray(&reg->dataArray, dataIndex);
+        if (!frameData)
+        {
+            return;
+        }
+
+        const ZuiItem *frameItem = ZuiGetItemMut(frameData->itemId);
+        if (!frameItem || !frameItem->isContainer)
+        {
+            return;
+        }
+
+        // Update children
+        const unsigned int *childIds = (unsigned int *)frameItem->children.items;
+        for (unsigned int i = 0; i < frameItem->children.count; i++)
+        {
+            const ZuiItem *child = ZuiGetItem(childIds[i]);
+            if (child)
+            {
+                ZuiDispatchUpdate(child);
+            }
+        }
+    }
+
+    void ZuiRenderFrame(unsigned int dataIndex)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        ZuiTypeRegistration *reg = ZuiGetTypeRegistration(ZUI_BUILTIN_FRAME);
+        if (!reg)
+        {
+            return;
+        }
+
+        const ZuiFrameData *frameData = (const ZuiFrameData *)ZuiGetDynArray(&reg->dataArray, dataIndex);
+        if (!frameData)
+        {
+            return;
+        }
+
+        unsigned int itemId = frameData->itemId;
+
+        // Check State component
+        const ZuiStateData *state = ZuiGetState(itemId);
+        if (state && !state->isVisible)
+        {
+            return;
+        }
+
+        const ZuiItem *frameItem = ZuiGetItem(itemId);
+        if (!frameItem)
+        {
+            return;
+        }
+
+        Rectangle bounds = ZuiGetTransformBounds(itemId);
+
+        // Get style
+        const ZuiStyleData *style = ZuiGetStyle(itemId);
+        Color bgColor = style ? style->background.normal : BLANK;
+
+        // Apply animation (alpha fade)
+        float alpha = ZuiAnimGetValue(itemId, ZUI_ANIM_SLOT_ALPHA);
+        bgColor.a = (unsigned char)((float)bgColor.a * alpha);
+
+        // Calculate roundness
+        float roundness = ZuiPixelsToRoundness(bounds, frameData->cornerRadius);
+
+        // Draw shadow if enabled
+        if (frameData->hasShadow && style && style->hasShadow)
+        {
+            Rectangle shadowBounds = bounds;
+            shadowBounds.x += style->shadowOffset.x;
+            shadowBounds.y += style->shadowOffset.y;
+            DrawRectangleRounded(shadowBounds, roundness, ZUI_ROUNDNESS_SEGMENTS,
+                                 Fade(style->shadowColor, alpha));
+        }
+
+        // Draw background
+        if (bgColor.a > 0)
+        {
+            DrawRectangleRounded(bounds, roundness, ZUI_ROUNDNESS_SEGMENTS, bgColor);
+        }
+
+        // Draw border
+        if (style && style->borderNormal.enabled && style->borderNormal.thickness > 0)
+        {
+            Color borderColor = style->borderNormal.color;
+            borderColor.a = (unsigned char)((float)borderColor.a * alpha);
+            DrawRectangleRoundedLinesEx(bounds, roundness, ZUI_ROUNDNESS_SEGMENTS,
+                                        style->borderNormal.thickness, borderColor);
+        }
+
+        // Render children
+        if (frameItem->isContainer)
+        {
+            const unsigned int *childIds = (unsigned int *)frameItem->children.items;
+            for (unsigned int i = 0; i < frameItem->children.count; i++)
+            {
+                const ZuiItem *child = ZuiGetItem(childIds[i]);
+                if (child)
+                {
+                    ZuiDispatchRender(child);
+                }
+            }
+        }
+    }
+
+    unsigned int ZuiBeginFrame(Rectangle bounds, Color color)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return ZUI_ID_INVALID;
+        }
+
+        g_zui_ctx->cursor.isRow = false;
+        unsigned int id = ZuiCreateFrame(bounds, color);
+
+        if (id == ZUI_ID_INVALID)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_VALUE, "Failed to create frame");
+            return ZUI_ID_INVALID;
+        }
+
+        ZuiSetTransformBounds(id, bounds);
+        float pad = ZuiGetFramePadding(id);
+
+        unsigned int active = g_zui_ctx->cursor.activeFrame;
+        ZuiItemAddChild(active, id);
+
+        g_zui_ctx->cursor.parentFrame = g_zui_ctx->cursor.activeFrame;
+        g_zui_ctx->cursor.position = (Vector2){bounds.x + pad, bounds.y + pad};
+        g_zui_ctx->cursor.restPosition = g_zui_ctx->cursor.position;
+        g_zui_ctx->cursor.tempRestPosition = g_zui_ctx->cursor.position;
+        g_zui_ctx->cursor.activeFrame = id;
+
+        return id;
+    }
+
+    void ZuiEndFrame(void)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        g_zui_ctx->cursor.isRow = false;
+        g_zui_ctx->cursor.activeFrame = g_zui_ctx->cursor.parentFrame;
+    }
+
+    unsigned int ZuiNewFrame(Color color, float width, float height)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return ZUI_ID_INVALID;
+        }
+
+        Rectangle bounds = (Rectangle){
+            g_zui_ctx->cursor.position.x,
+            g_zui_ctx->cursor.position.y,
+            width, height};
+
+        unsigned int id = ZuiCreateFrame(bounds, color);
+        ZuiSetTransformBounds(id, bounds);
+
+        unsigned int active = g_zui_ctx->cursor.activeFrame;
+        ZuiItemAddChild(active, id);
+
+        ZuiAdvanceCursor(width, height);
+        g_zui_ctx->cursor.lastItemBounds = bounds;
+
+        return id;
+    }
+
+    void ZuiFrameBackground(Color color)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        ZuiStyleData *style = ZuiGetStyleMut(g_zui_ctx->cursor.activeFrame);
+        if (style)
+        {
+            style->background.normal = color;
+        }
+    }
+
+    void ZuiFrameOutline(Color color, float thickness)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        ZuiStyleData *style = ZuiGetStyleMut(g_zui_ctx->cursor.activeFrame);
+        if (style)
+        {
+            style->borderNormal.enabled = (color.a > 0 && thickness > 0);
+            style->borderNormal.thickness = thickness;
+            style->borderNormal.color = color;
+        }
+    }
+
+    void ZuiFrameGap(float gap)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        ZuiLayoutData *layout = ZuiGetActiveLayoutMut();
+        if (layout)
+        {
+            layout->spacing = gap;
+        }
+    }
+
+    void ZuiFramePad(float pad)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        ZuiLayoutData *layout = ZuiGetActiveLayoutMut();
+        if (layout)
+        {
+            layout->padding = pad;
+
+            Rectangle bounds = ZuiGetTransformBounds(g_zui_ctx->cursor.activeFrame);
+            g_zui_ctx->cursor.position = (Vector2){bounds.x + pad, bounds.y + pad};
+            ZuiUpdateRestPosition();
+        }
+    }
+
+    void ZuiFrameOffset(float x, float y)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        ZuiTransform *transform = ZuiGetTransformMut(g_zui_ctx->cursor.activeFrame);
+        if (transform)
+        {
+            transform->offset.x += x;
+            transform->offset.y += y;
+        }
+    }
+
+    void ZuiFrameCornerRadius(float radius)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        ZuiFrameData *frame = ZuiGetFrameDataMut(g_zui_ctx->cursor.activeFrame);
+        if (frame)
+        {
+            frame->cornerRadius = radius;
+        }
+    }
+
+    float ZuiGetFramePadding(unsigned int frameId)
+    {
+        const ZuiLayoutData *layout = ZuiGetLayoutData(frameId);
+        return layout ? layout->padding : ZUI_DEFAULT_FRAME_PADDING;
+    }
+
+    float ZuiGetFrameSpacing(unsigned int frameId)
+    {
+        const ZuiLayoutData *layout = ZuiGetLayoutData(frameId);
+        return layout ? layout->spacing : ZUI_DEFAULT_FRAME_GAP;
+    }
+
+    void ZuiPrintFrame(unsigned int id)
+    {
+        const ZuiItem *item = ZuiGetItem(id);
+        if (!item || item->type != ZUI_FRAME)
+        {
+            TraceLog(LOG_ERROR, "Item %u is not a frame", id);
+            return;
+        }
+
+        const ZuiFrameData *frame = ZuiGetFrameData(id);
+        if (!frame)
+        {
+            TraceLog(LOG_ERROR, "Failed to get frame data for item %u", id);
+            return;
+        }
+
+        Rectangle bounds = ZuiGetTransformBounds(id);
+        float pad = ZuiGetFramePadding(id);
+        float gap = ZuiGetFrameSpacing(id);
+
+        TraceLog(LOG_INFO, "┌─────── FRAME DATA ───────");
+        TraceLog(LOG_INFO, "│ Item ID:      %u", frame->itemId);
+        TraceLog(LOG_INFO, "│ Bounds:       (%.1f, %.1f, %.1fx%.1f)",
+                 (double)bounds.x, (double)bounds.y,
+                 (double)bounds.width, (double)bounds.height);
+        TraceLog(LOG_INFO, "│ Padding:      %.1f", (double)pad);
+        TraceLog(LOG_INFO, "│ Gap:          %.1f", (double)gap);
+        TraceLog(LOG_INFO, "│ Components:   %u", item->componentCount);
+        TraceLog(LOG_INFO, "└──────────────────────────");
+    }
+    // -----------------------------------------------------------------------------
+    // zui_label.c (enhanced)
+
+    const ZuiLabelData *ZuiGetLabelData(unsigned int itemId)
+    {
+        const ZuiItem *item = ZuiGetItem(itemId);
+        if (!item || item->type != ZUI_BUILTIN_LABEL)
+        {
+            return NULL;
+        }
+        return (const ZuiLabelData *)ZuiGetTypedDataConst(itemId);
+    }
+
+    ZuiLabelData *ZuiGetLabelDataMut(unsigned int itemId)
+    {
+        const ZuiItem *item = ZuiGetItem(itemId);
+        if (!item || item->type != ZUI_BUILTIN_LABEL)
+        {
+            return NULL;
+        }
+        return (ZuiLabelData *)ZuiGetTypedData(itemId);
+    }
+
+    unsigned int ZuiCreateLabel(const char *text, Font font)
     {
         if (!g_zui_ctx || !text)
         {
             return ZUI_ID_INVALID;
         }
 
-        ZuiLabelData *labelData =
-            (ZuiLabelData *)ZuiPushDynArray(&g_zui_ctx->labelData, &g_zui_arena);
+        // Create item
+        unsigned int itemId = ZuiCreateTypedItem(ZUI_BUILTIN_LABEL);
+        if (itemId == ZUI_ID_INVALID)
+        {
+            return ZUI_ID_INVALID;
+        }
+
+        // Initialize label data
+        ZuiLabelData *labelData = ZuiGetLabelDataMut(itemId);
         if (!labelData)
         {
             return ZUI_ID_INVALID;
         }
 
-        unsigned int dataIndex = g_zui_ctx->labelData.count - 1;
-        unsigned int item_id = ZuiCreateItem(ZUI_LABEL, dataIndex);
-        if (item_id == ZUI_ID_INVALID)
-        {
-            return ZUI_ID_INVALID;
-        }
-
         *labelData = (ZuiLabelData){
-            .itemId = item_id,
+            .itemId = itemId,
             .font = font,
-            .textColor = BLACK,
-            .backgroundColor = BLANK,
             .fontSize = ZUI_BASE_FONT_SIZE,
-            .spacing = 0.0F,
-            .hasBackground = false,
-            .bounds = {0, 0, 0, 0},
+            .fontSpacing = ZUI_FONT_SPACING,
+            .isMono = false,
+            .onClickSimple = NULL,
         };
-
         snprintf(labelData->text, ZUI_MAX_TEXT_LENGTH, "%s", text);
 
-        Vector2 size =
-            MeasureTextEx(font, text,
-                          labelData->fontSize,
-                          labelData->spacing);
+        Vector2 textSize = MeasureTextEx(font, text, labelData->fontSize, labelData->fontSpacing);
 
-        labelData->bounds.width = size.x;
-        labelData->bounds.height = size.y;
-
-        ZuiItem *item = ZuiGetItemMut(item_id);
-        if (!item)
+        // Add Transform component
+        ZuiTransform *transform = (ZuiTransform *)ZuiItemAddComponent(itemId, ZUI_COMPONENT_TRANSFORM);
+        if (!transform)
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_INTERNAL_ERROR,
-                             "Failed to retrieve item after creation");
             return ZUI_ID_INVALID;
         }
-        item->renderFunction = ZuiRenderLabel;
-        item->updateFunction = NULL;
-        item->hasChildren = false;
+        *transform = (ZuiTransform){
+            .itemId = itemId,
+            .bounds = (Rectangle){0, 0, textSize.x, textSize.y},
+            .offset = (Vector2){0, 0},
+            .isDirty = false,
+        };
 
-        return item_id;
+        // Add Style component (for colors)
+        ZuiStyleData *style = ZuiAddStyle(itemId);
+        if (style)
+        {
+            style->textColor = BLACK;
+            style->background.normal = BLANK;
+            style->fontSize = labelData->fontSize;
+            style->fontSpacing = labelData->fontSpacing;
+        }
+
+        // Add State component (visible, enabled)
+        ZuiStateData *state = ZuiAddState(itemId);
+        if (state)
+        {
+            state->isVisible = true;
+            state->isEnabled = true;
+        }
+
+        // Add Layer component (default to content layer)
+        ZuiLayerData *layer = ZuiAddLayer(itemId);
+        if (layer)
+        {
+            layer->layer = ZUI_LAYER_CONTENT;
+            layer->order = 0;
+            layer->blocksInput = false;
+        }
+
+        // Add Animation component (for smooth transitions)
+        const ZuiAnimationData *anim = ZuiAddAnimation(itemId);
+        if (anim)
+        {
+            ZuiAnimSetDuration(itemId, ZUI_ANIM_SLOT_ALPHA, 0.2F);
+            ZuiAnimSetType(itemId, ZUI_ANIM_SLOT_ALPHA, ZUI_ANIM_EASE_OUT);
+            ZuiAnimReset(itemId, ZUI_ANIM_SLOT_ALPHA, 1.0F);
+        }
+
+        return itemId;
     }
 
-    void ZuiRenderLabel(const unsigned int dataIndex)
+    void ZuiRenderLabel(unsigned int dataIndex)
     {
-        if (!g_zui_ctx)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
             return;
         }
 
-        const ZuiLabelData *labelItems = (ZuiLabelData *)g_zui_ctx->labelData.items;
-        const ZuiLabelData *labelData = &labelItems[dataIndex];
-        const ZuiItem *item = ZuiGetItem(labelData->itemId);
-        if (!item || !item->isVisible)
+        ZuiTypeRegistration *reg = ZuiGetTypeRegistration(ZUI_BUILTIN_LABEL);
+        if (!reg)
         {
             return;
         }
 
-        if (labelData->hasBackground)
+        const ZuiLabelData *labelData = (const ZuiLabelData *)ZuiGetDynArray(&reg->dataArray, dataIndex);
+        if (!labelData)
         {
-            DrawRectangleRec(labelData->bounds, labelData->backgroundColor);
+            return;
         }
-        //  if (tex->isInsideWindow)
-        // {
-        //     position = (Vector2){tex->data.bounds.x + tex->parent.x,
-        //                          tex->data.bounds.y + tex->parent.y};
-        // }
 
-        DrawTextEx(labelData->font,
-                   labelData->text,
-                   (Vector2){labelData->bounds.x, labelData->bounds.y},
-                   labelData->fontSize,
-                   labelData->spacing,
-                   labelData->textColor);
+        unsigned int itemId = labelData->itemId;
+
+        // Check State component
+        const ZuiStateData *state = ZuiGetState(itemId);
+        if (state && !state->isVisible)
+        {
+            return;
+        }
+
+        // Get transform
+        Rectangle bounds = ZuiGetTransformBounds(itemId);
+
+        // Get style
+        const ZuiStyleData *style = ZuiGetStyle(itemId);
+        Color textColor = style ? style->textColor : BLACK;
+        Color bgColor = style ? style->background.normal : BLANK;
+
+        // Apply animation (alpha fade)
+        float alpha = ZuiAnimGetValue(itemId, ZUI_ANIM_SLOT_ALPHA);
+        textColor.a = (unsigned char)((float)textColor.a * alpha);
+        bgColor.a = (unsigned char)((float)bgColor.a * alpha);
+
+        // Apply interaction states (if interactive)
+        const ZuiInteractionData *interaction = ZuiGetInteraction(itemId);
+        if (interaction && style)
+        {
+            if (interaction->isPressed)
+            {
+                textColor = style->foreground.pressed;
+                bgColor = style->background.pressed;
+            }
+            else if (interaction->isHovered)
+            {
+                textColor = style->foreground.hovered;
+                bgColor = style->background.hovered;
+            }
+        }
+
+        // Draw background
+        if (bgColor.a > 0)
+        {
+            DrawRectangleRec(bounds, bgColor);
+        }
+
+        // Draw text
+        DrawTextEx(labelData->font, labelData->text,
+                   (Vector2){bounds.x, bounds.y},
+                   labelData->fontSize, labelData->fontSpacing, textColor);
     }
 
-    void ZuiPrintLabel(const unsigned int id)
+    unsigned int ZuiNewLabel(const char *text)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return ZUI_ID_INVALID;
+        }
+
+        Font font = g_zui_ctx->font;
+        unsigned int id = ZuiCreateLabel(text, font);
+
+        Rectangle bounds = ZuiGetTransformBounds(id);
+        bounds.x = g_zui_ctx->cursor.position.x;
+        bounds.y = g_zui_ctx->cursor.position.y;
+        ZuiSetTransformBounds(id, bounds);
+
+        ZuiItemAddChild(g_zui_ctx->cursor.activeFrame, id);
+        ZuiAdvanceCursor(bounds.width, bounds.height);
+        g_zui_ctx->cursor.lastItemBounds = bounds;
+        g_zui_ctx->cursor.activeLabel = id;
+
+        return id;
+    }
+
+    unsigned int ZuiNewMonoLabel(const char *text)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return ZUI_ID_INVALID;
+        }
+
+        unsigned int id = ZuiCreateLabel(text, g_zui_ctx->monoFont);
+
+        ZuiLabelData *data = ZuiGetLabelDataMut(id);
+        if (data)
+        {
+            data->isMono = true;
+        }
+
+        Rectangle bounds = ZuiGetTransformBounds(id);
+        bounds.x = g_zui_ctx->cursor.position.x;
+        bounds.y = g_zui_ctx->cursor.position.y;
+        ZuiSetTransformBounds(id, bounds);
+
+        ZuiItemAddChild(g_zui_ctx->cursor.activeFrame, id);
+        ZuiAdvanceCursor(bounds.width, bounds.height);
+        g_zui_ctx->cursor.lastItemBounds = bounds;
+        g_zui_ctx->cursor.activeLabel = id;
+
+        return id;
+    }
+
+    void ZuiLabelTextColor(Color textColor)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        ZuiStyleData *style = ZuiGetStyleMut(g_zui_ctx->cursor.activeLabel);
+        if (style)
+        {
+            style->textColor = textColor;
+        }
+    }
+
+    void ZuiLabelBackgroundColor(Color backgroundColor)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        ZuiStyleData *style = ZuiGetStyleMut(g_zui_ctx->cursor.activeLabel);
+        if (style)
+        {
+            style->background.normal = backgroundColor;
+        }
+    }
+
+    void ZuiLabelAlignX(ZuiAlignmentX align)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        unsigned int labelId = g_zui_ctx->cursor.activeLabel;
+        Rectangle labelBounds = ZuiGetTransformBounds(labelId);
+        Rectangle frameBounds = ZuiGetTransformBounds(g_zui_ctx->cursor.activeFrame);
+        float pad = ZuiGetFramePadding(g_zui_ctx->cursor.activeFrame);
+
+        switch (align)
+        {
+        case ZUI_ALIGN_X_CENTER:
+            labelBounds.x = frameBounds.x + (frameBounds.width * 0.5F) - (labelBounds.width * 0.5F);
+            break;
+        case ZUI_ALIGN_X_LEFT:
+            labelBounds.x = frameBounds.x + pad;
+            break;
+        case ZUI_ALIGN_X_RIGHT:
+            labelBounds.x = frameBounds.x + frameBounds.width - pad - labelBounds.width;
+            break;
+        }
+
+        ZuiSetTransformBounds(labelId, labelBounds);
+    }
+
+    void ZuiLabelOffset(float x, float y)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        ZuiTransform *transform = ZuiGetTransformMut(g_zui_ctx->cursor.activeLabel);
+        if (transform)
+        {
+            transform->offset.x += x;
+            transform->offset.y += y;
+            g_zui_ctx->cursor.position.x += x;
+            g_zui_ctx->cursor.position.y += y;
+        }
+    }
+
+    // Wrapper function to convert Interaction callback to simple callback
+    static void ZuiLabelClickWrapper(unsigned int id, ZuiMouseButton button)
+    {
+        (void)button; // Ignore button parameter
+
+        ZuiLabelData *label = ZuiGetLabelDataMut(id);
+        if (label && label->onClickSimple)
+        {
+            label->onClickSimple(id);
+        }
+    }
+
+    void ZuiLabelMakeClickable(void (*onClick)(unsigned int))
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        unsigned int labelId = g_zui_ctx->cursor.activeLabel;
+
+        // Store the simple callback in label data
+        ZuiLabelData *labelData = ZuiGetLabelDataMut(labelId);
+        if (labelData)
+        {
+            labelData->onClickSimple = onClick;
+        }
+
+        // Add Interaction component with wrapper function
+        ZuiInteractionData *interaction = ZuiAddInteraction(labelId);
+        if (interaction)
+        {
+            interaction->onClick = ZuiLabelClickWrapper;
+            interaction->capturesMouse = true;
+            interaction->acceptsFocus = false;
+        }
+
+        // Add hover animation
+        ZuiAnimSetType(labelId, ZUI_ANIM_SLOT_HOVER, ZUI_ANIM_EASE_OUT);
+        ZuiAnimSetDuration(labelId, ZUI_ANIM_SLOT_HOVER, 0.15F);
+    }
+
+    void ZuiPrintLabel(unsigned int id)
     {
         const ZuiItem *item = ZuiGetItem(id);
         if (!item || item->type != ZUI_LABEL)
@@ -3050,290 +5358,105 @@ extern "C"
             return;
         }
 
+        Rectangle bounds = ZuiGetTransformBounds(id);
+
         TraceLog(LOG_INFO, "┌─────── LABEL DATA ───────");
         TraceLog(LOG_INFO, "│ Item ID:      %u", label->itemId);
         TraceLog(LOG_INFO, "│ Text:         \"%s\"", label->text);
         TraceLog(LOG_INFO, "│ Bounds:       (%.1f, %.1f, %.1fx%.1f)",
-                 (double)label->bounds.x, (double)label->bounds.y,
-                 (double)label->bounds.width, (double)label->bounds.height);
+                 (double)bounds.x, (double)bounds.y,
+                 (double)bounds.width, (double)bounds.height);
         TraceLog(LOG_INFO, "│ Font Size:    %.1f", (double)label->fontSize);
-        TraceLog(LOG_INFO, "│ Spacing:      %.1f", (double)label->spacing);
-        TraceLog(LOG_INFO, "│ Text Color:   (%d, %d, %d, %d)",
-                 label->textColor.r, label->textColor.g,
-                 label->textColor.b, label->textColor.a);
-        TraceLog(LOG_INFO, "│ Has BG:       %s", label->hasBackground ? "yes" : "no");
-        if (label->hasBackground)
-        {
-            TraceLog(LOG_INFO, "│ BG Color:     (%d, %d, %d, %d)",
-                     label->backgroundColor.r, label->backgroundColor.g,
-                     label->backgroundColor.b, label->backgroundColor.a);
-        }
+        TraceLog(LOG_INFO, "│ Components:   %u", item->componentCount);
         TraceLog(LOG_INFO, "└──────────────────────────");
     }
-
-    unsigned int ZuiLabelEx(const char *text, const bool isMono)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return ZUI_ID_INVALID;
-        }
-
-        if (!text)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_POINTER, "Label text is NULL");
-            return ZUI_ID_INVALID;
-        }
-
-        Font font = isMono ? g_zui_ctx->monoFont : g_zui_ctx->font;
-        unsigned int id = ZuiCreateLabel(text, font);
-
-        ZuiLabelData *labelData = ZuiGetLabelDataMut(id);
-        if (!labelData)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_VALUE, "Failed to get label data");
-            return ZUI_ID_INVALID;
-        }
-
-        labelData->bounds.x = g_zui_ctx->cursor.position.x;
-        labelData->bounds.y = g_zui_ctx->cursor.position.y;
-
-        unsigned int active = g_zui_ctx->cursor.activeFrame;
-
-        ZuiItemAddChild(active, id);
-        ZuiAdvanceCursor(labelData->bounds.width, labelData->bounds.height);
-        g_zui_ctx->cursor.activeTexture = id;
-        g_zui_ctx->cursor.lastItemBounds = labelData->bounds;
-        g_zui_ctx->cursor.activeLabel = id;
-        return id;
-    }
-
-    unsigned int ZuiNewMonoLabel(const char *text)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return ZUI_ID_INVALID;
-        }
-
-        if (!text)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_POINTER, "Text pointer is NULL");
-            return ZUI_ID_INVALID;
-        }
-
-        return ZuiLabelEx(text, true);
-    }
-
-    unsigned int ZuiNewLabel(const char *text)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return ZUI_ID_INVALID;
-        }
-
-        if (!text)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_POINTER, "Text pointer is NULL");
-            return ZUI_ID_INVALID;
-        }
-
-        return ZuiLabelEx(text, false);
-    }
-
-    void ZuiLabelTextColor(const Color textColor)
-    {
-
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return;
-        }
-
-        ZuiLabelData *labelData = ZuiGetLabelDataMut(g_zui_ctx->cursor.activeLabel);
-        if (labelData)
-        {
-            labelData->textColor = textColor;
-        }
-    }
-
-    void ZuiLabelBackgroundColor(const Color backgroundColor)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return;
-        }
-
-        ZuiLabelData *labelData = ZuiGetLabelDataMut(g_zui_ctx->cursor.activeLabel);
-        if (labelData)
-        {
-            labelData->backgroundColor = backgroundColor;
-            labelData->hasBackground = true;
-        }
-    }
-
-    void ZuiLabelAlignX(const ZuiAlignmentX align)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return;
-        }
-
-        ZuiLabelData *labelData = ZuiGetLabelDataMut(g_zui_ctx->cursor.activeLabel);
-        ZuiFrameData *frameData = ZuiGetFrameDataMut(g_zui_ctx->cursor.activeFrame);
-        if (!labelData || !frameData)
-        {
-            return; // ADD ZUI ERROR
-        }
-
-        switch (align)
-        {
-        case ZUI_ALIGN_X_CENTER:
-            labelData->bounds.x = frameData->bounds.x + (frameData->bounds.width * 0.5F) - (labelData->bounds.width * 0.5F);
-            break;
-        case ZUI_ALIGN_X_LEFT:
-            labelData->bounds.x = frameData->bounds.x + frameData->padding;
-            break;
-        case ZUI_ALIGN_X_RIGHT:
-            labelData->bounds.x = frameData->bounds.x + frameData->bounds.width - frameData->padding - labelData->bounds.width;
-            break;
-        }
-    }
-
-    void ZuiLabelOffset(const float x, const float y)
-    {
-        if (!g_zui_ctx)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
-            return;
-        }
-
-        ZuiLabelData *labelData = ZuiGetLabelDataMut(g_zui_ctx->cursor.activeLabel);
-        if (labelData)
-        {
-            labelData->bounds.x += x;
-            labelData->bounds.y += y;
-            g_zui_ctx->cursor.position.x += x;
-            g_zui_ctx->cursor.position.y += y;
-        }
-    }
-// -----------------------------------------------------------------------------
-#include "raylib.h"
+    // -----------------------------------------------------------------------------
+    // zui_texture.c
 
     const ZuiTextureData *ZuiGetTextureData(const unsigned int itemId)
     {
         const ZuiItem *item = ZuiGetItem(itemId);
-        if (!item || item->type != ZUI_TEXTURE)
+        if (!item || item->type != ZUI_BUILTIN_TEXTURE)
         {
             return NULL;
         }
-
-        unsigned int dataIndex = (unsigned int)(uintptr_t)item->dataIndex;
-        return (ZuiTextureData *)ZuiGetDynArray(&g_zui_ctx->textureData, dataIndex);
+        return (const ZuiTextureData *)ZuiGetTypedDataConst(itemId);
     }
 
     ZuiTextureData *ZuiGetTextureDataMut(const unsigned int itemId)
     {
         const ZuiItem *item = ZuiGetItem(itemId);
-        if (!item || item->type != ZUI_TEXTURE)
+        if (!item || item->type != ZUI_BUILTIN_TEXTURE)
         {
             return NULL;
         }
-
-        unsigned int dataIndex = (unsigned int)(uintptr_t)item->dataIndex;
-        return (ZuiTextureData *)ZuiGetDynArray(&g_zui_ctx->textureData, dataIndex);
+        return (ZuiTextureData *)ZuiGetTypedData(itemId);
     }
 
     unsigned int ZuiCreateTexture(const Texture2D texture)
     {
-        if (!g_zui_ctx)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
             return ZUI_ID_INVALID;
         }
 
-        ZuiTextureData *texData =
-            (ZuiTextureData *)ZuiPushDynArray(&g_zui_ctx->textureData, &g_zui_arena);
+        unsigned int itemId = ZuiCreateTypedItem(ZUI_BUILTIN_TEXTURE);
+        if (itemId == ZUI_ID_INVALID)
+        {
+            return ZUI_ID_INVALID;
+        }
+
+        ZuiTextureData *texData = ZuiGetTextureDataMut(itemId);
         if (!texData)
-        {
-            ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_MEMORY, "Failed to allocate texture data");
-            return ZUI_ID_INVALID;
-        }
-
-        unsigned int dataIndex = g_zui_ctx->textureData.count - 1;
-
-        unsigned int item_id = ZuiCreateItem(ZUI_TEXTURE, dataIndex);
-        if (item_id == ZUI_ID_INVALID)
         {
             return ZUI_ID_INVALID;
         }
 
         *texData = (ZuiTextureData){
-            .itemId = item_id,
+            .itemId = itemId,
             .texture = texture,
             .color = WHITE,
-            .bounds = {
-                0.0F, 0.0F,
-                (float)texture.width,
-                (float)texture.height},
-            .isPatch = false,
+            .isVisible = true,
         };
 
-        ZuiItem *item = ZuiGetItemMut(item_id);
-        if (!item)
+        // Add transform component
+        ZuiTransform *transform = (ZuiTransform *)ZuiItemAddComponent(itemId, ZUI_COMPONENT_TRANSFORM);
+        if (!transform)
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_INTERNAL_ERROR,
-                             "Failed to retrieve item after creation");
             return ZUI_ID_INVALID;
         }
-        item->renderFunction = ZuiRenderTexture;
-        item->updateFunction = NULL;
-        item->hasChildren = false;
 
-        return item_id;
+        *transform = (ZuiTransform){
+            .itemId = itemId,
+            .bounds = (Rectangle){0, 0, (float)texture.width, (float)texture.height},
+            .offset = (Vector2){0, 0},
+            .isDirty = false,
+        };
+
+        return itemId;
     }
 
     void ZuiRenderTexture(unsigned int dataIndex)
     {
-        if (!g_zui_ctx)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
             return;
         }
 
-        const ZuiTextureData *textureItems = (ZuiTextureData *)g_zui_ctx->textureData.items;
-        const ZuiTextureData *texData = &textureItems[dataIndex];
-        const ZuiItem *texItem = ZuiGetItem(texData->itemId);
-        if (!texItem || !texItem->isVisible)
-        {
-            return;
-        }
-        //  if (tex->isInsideWindow)
-        // {
-        //     position = (Vector2){tex->data.bounds.x + tex->parent.x,
-        //                          tex->data.bounds.y + tex->parent.y};
-        // }
-        DrawTexturePro(texData->texture, texData->npatch.source, texData->bounds, (Vector2){0.0F, 0.0F}, 0.0F, texData->color);
-    }
-
-    void ZuiRenderPatchTexture(const unsigned int dataIndex)
-    {
-        if (!g_zui_ctx)
+        ZuiTypeRegistration *reg = ZuiGetTypeRegistration(ZUI_BUILTIN_TEXTURE);
+        if (!reg)
         {
             return;
         }
 
-        const ZuiTextureData *textureItems = (ZuiTextureData *)g_zui_ctx->textureData.items;
-        const ZuiTextureData *texData = &textureItems[dataIndex];
-        const ZuiItem *texItem = ZuiGetItem(texData->itemId);
-        if (!texItem || !texItem->isVisible)
+        const ZuiTextureData *texData = (const ZuiTextureData *)ZuiGetDynArray(&reg->dataArray, dataIndex);
+        if (!texData || !texData->isVisible)
         {
             return;
         }
 
-        DrawTextureNPatch(texData->texture, texData->npatch, texData->bounds, (Vector2){0}, 0.0F, texData->color);
+        Rectangle bounds = ZuiGetTransformBounds(texData->itemId);
+        DrawTextureNPatch(texData->texture, texData->npatch, bounds, (Vector2){0}, 0.0F, texData->color);
     }
 
     void ZuiPrintTexture(const unsigned int id)
@@ -3352,14 +5475,16 @@ extern "C"
             return;
         }
 
+        Rectangle bounds = ZuiGetTransformBounds(id);
+
         TraceLog(LOG_INFO, "┌─────── TEXTURE DATA ─────");
         TraceLog(LOG_INFO, "│ Item ID:      %u", texture->itemId);
         TraceLog(LOG_INFO, "│ Texture ID:   %u", texture->texture.id);
         TraceLog(LOG_INFO, "│ Texture Size: %dx%d",
                  texture->texture.width, texture->texture.height);
         TraceLog(LOG_INFO, "│ Bounds:       (%.1f, %.1f, %.1fx%.1f)",
-                 (double)texture->bounds.x, (double)texture->bounds.y,
-                 (double)texture->bounds.width, (double)texture->bounds.height);
+                 (double)bounds.x, (double)bounds.y,
+                 (double)bounds.width, (double)bounds.height);
         TraceLog(LOG_INFO, "│ Color:        (%d, %d, %d, %d)",
                  texture->color.r, texture->color.g,
                  texture->color.b, texture->color.a);
@@ -3375,9 +5500,8 @@ extern "C"
 
     unsigned int ZuiNewTextureEx(const Texture2D tex, const NPatchInfo npatch, const Rectangle bounds, const bool isPatch)
     {
-        if (!g_zui_ctx)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
             return ZUI_ID_INVALID;
         }
 
@@ -3389,34 +5513,23 @@ extern "C"
             return ZUI_ID_INVALID;
         }
 
-        texData->bounds = bounds;
+        ZuiSetTransformBounds(id, bounds);
         texData->npatch = npatch;
-
-        if (isPatch)
-        {
-
-            texData->isPatch = true;
-            ZuiItem *item = ZuiGetItemMut(id);
-            if (item)
-            {
-                item->renderFunction = ZuiRenderPatchTexture;
-            }
-        }
+        texData->isPatch = isPatch;
 
         unsigned int active = g_zui_ctx->cursor.activeFrame;
         ZuiItemAddChild(active, id);
 
-        ZuiAdvanceCursor(texData->bounds.width, texData->bounds.height);
+        ZuiAdvanceCursor(bounds.width, bounds.height);
         g_zui_ctx->cursor.activeTexture = id;
-        g_zui_ctx->cursor.lastItemBounds = texData->bounds;
+        g_zui_ctx->cursor.lastItemBounds = bounds;
         return id;
     }
 
     unsigned int ZuiNewTexture(const Texture2D tex)
     {
-        if (!g_zui_ctx)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
             return ZUI_ID_INVALID;
         }
 
@@ -3429,9 +5542,8 @@ extern "C"
 
     unsigned int ZuiNew3XSlice(const Texture2D tex, const int width, const int left, const int right)
     {
-        if (!g_zui_ctx)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
             return ZUI_ID_INVALID;
         }
 
@@ -3447,9 +5559,8 @@ extern "C"
 
     unsigned int ZuiNew3YSlice(const Texture2D tex, const int height, const int top, const int bottom)
     {
-        if (!g_zui_ctx)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
             return ZUI_ID_INVALID;
         }
 
@@ -3464,9 +5575,8 @@ extern "C"
 
     unsigned int ZuiNew9Slice(const Texture2D tex, const int width, const int height, const int left, const int top, const int right, const int bottom)
     {
-        if (!g_zui_ctx)
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
         {
-            ZUI_REPORT_ERROR(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL");
             return ZUI_ID_INVALID;
         }
 
@@ -3479,6 +5589,406 @@ extern "C"
             .layout = NPATCH_NINE_PATCH};
         Rectangle bounds = (Rectangle){g_zui_ctx->cursor.position.x, g_zui_ctx->cursor.position.y, (float)width, (float)height};
         return ZuiNewTextureEx(tex, npatch, bounds, true);
+    }
+    // -----------------------------------------------------------------------------
+    // zui_context.c
+    // #include "zui_button.h"
+
+    ZuiContext *g_zui_ctx = NULL;
+    ZuiArena g_zui_arena = {0};
+
+    // ----------------------------------------------------------------------------Context
+
+    void ZuiUpdateRestPosition(void)
+    {
+        g_zui_ctx->cursor.restPosition = g_zui_ctx->cursor.position;
+        g_zui_ctx->cursor.tempRestPosition = g_zui_ctx->cursor.position;
+    }
+
+    ZuiFrameData *ZuiGetActiveFrameDataMut(void)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return NULL;
+        }
+        return ZuiGetFrameDataMut(g_zui_ctx->cursor.activeFrame);
+    }
+
+    ZuiLayoutData *ZuiGetActiveLayoutMut(void)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return NULL;
+        }
+        return ZuiGetLayoutDataMut(g_zui_ctx->cursor.activeFrame);
+    }
+
+    bool ZuiIsInitialized(void)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    ZuiContext *ZuiGetContext(void)
+    {
+        ZUI_ASSERT(g_zui_ctx != NULL, "ZUI context not initialized - call ZuiInit() first");
+
+        if (g_zui_ctx == NULL)
+        {
+            return NULL;
+        }
+
+        return g_zui_ctx;
+    }
+
+    bool ZuiEnsureContext(ZuiResult error_code, const char *msg)
+    {
+        if (!g_zui_ctx)
+        {
+            ZUI_REPORT_ERROR(error_code, "%s", msg);
+            return false;
+        }
+        return true;
+    }
+
+    static void ZuiRegisterBuiltinTypes(void)
+    {
+        // Frame type
+        {
+            ZuiTypeInfo frameType = {
+                .name = "Frame",
+                .dataSize = sizeof(ZuiFrameData),
+                .dataAlignment = ZUI_ALIGNOF(ZuiFrameData),
+                .initialCapacity = ZUI_FRAMES_CAPACITY,
+                .update = ZuiUpdateFrame,
+                .render = ZuiRenderFrame,
+                .init = NULL,
+                .cleanup = NULL,
+            };
+
+            unsigned int id = ZuiRegisterType(&frameType);
+            ZUI_ASSERT(id == ZUI_BUILTIN_FRAME, "Frame type ID mismatch");
+
+            ZuiTypeRegistration *reg = ZuiGetTypeRegistration(id);
+            if (reg)
+            {
+                reg->isBuiltin = true;
+            }
+        }
+
+        // Label type
+        {
+            ZuiTypeInfo labelType = {
+                .name = "Label",
+                .dataSize = sizeof(ZuiLabelData),
+                .dataAlignment = ZUI_ALIGNOF(ZuiLabelData),
+                .initialCapacity = ZUI_LABELS_CAPACITY,
+                .update = NULL,
+                .render = ZuiRenderLabel,
+                .init = NULL,
+                .cleanup = NULL,
+            };
+
+            unsigned int id = ZuiRegisterType(&labelType);
+            ZUI_ASSERT(id == ZUI_BUILTIN_LABEL, "Label type ID mismatch");
+
+            ZuiTypeRegistration *reg = ZuiGetTypeRegistration(id);
+            if (reg)
+            {
+                reg->isBuiltin = true;
+            }
+        }
+
+        // Texture type
+        {
+            ZuiTypeInfo textureType = {
+                .name = "Texture",
+                .dataSize = sizeof(ZuiTextureData),
+                .dataAlignment = ZUI_ALIGNOF(ZuiTextureData),
+                .initialCapacity = ZUI_TEXTURES_CAPACITY,
+                .update = NULL,
+                .render = ZuiRenderTexture,
+                .init = NULL,
+                .cleanup = NULL,
+            };
+
+            unsigned int id = ZuiRegisterType(&textureType);
+            ZUI_ASSERT(id == ZUI_BUILTIN_TEXTURE, "Texture type ID mismatch");
+
+            ZuiTypeRegistration *reg = ZuiGetTypeRegistration(id);
+            if (reg)
+            {
+                reg->isBuiltin = true;
+            }
+        }
+
+#ifdef ZUI_DEBUG
+        TraceLog(LOG_INFO, "ZUI: Registered %d built-in types", ZUI_BUILTIN_TYPE_COUNT);
+#endif
+        // ZuiRegisterButtonType();
+    }
+
+    bool ZuiInit(void)
+    {
+        if (g_zui_ctx)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_ALREADY_INITIALIZED, "ZUI context already exists");
+            return false;
+        }
+
+        ZuiResult result = ZuiInitArena(&g_zui_arena, ZUI_DEFAULT_ARENA_SIZE);
+        if (result != ZUI_OK)
+        {
+            TraceLog(LOG_ERROR, "ZUI: Arena initialization failed");
+            ZuiUnloadArena(&g_zui_arena);
+            g_zui_ctx = NULL;
+            return false;
+        }
+
+        ZuiContext *ctx = ZuiAllocArenaDefault(&g_zui_arena, sizeof(ZuiContext));
+        if (!ctx)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_OUT_OF_MEMORY, "Failed to allocate ZuiContext");
+            ZuiUnloadArena(&g_zui_arena);
+            return false;
+        }
+        *ctx = (ZuiContext){0};
+        g_zui_ctx = ctx;
+
+        // Initialize component registry FIRST
+        result = ZuiInitComponentRegistry();
+        if (result != ZUI_OK)
+        {
+            TraceLog(LOG_ERROR, "ZUI: Component registry init failed");
+            ZuiUnloadArena(&g_zui_arena);
+            g_zui_ctx = NULL;
+            return false;
+        }
+
+        // Register built-in components (before types, as types may use components)
+        // ZuiRegisterBuiltinComponents();
+        ZuiRegisterAllComponents();
+        // Initialize type registry
+        result = ZuiInitTypeRegistry();
+        if (result != ZUI_OK)
+        {
+            TraceLog(LOG_ERROR, "ZUI: Type registry init failed");
+            ZuiUnloadArena(&g_zui_arena);
+            g_zui_ctx = NULL;
+            return false;
+        }
+
+        // Register built-in types
+        ZuiRegisterBuiltinTypes();
+
+        // Items
+        result = ZuiInitDynArray(&ctx->items, &g_zui_arena, ZUI_ITEMS_CAPACITY, sizeof(ZuiItem), ZUI_ALIGNOF(ZuiItem), "Items");
+        if (result != ZUI_OK)
+        {
+            TraceLog(LOG_ERROR, "ZUI: Failed to initialize items array");
+            ZuiUnloadArena(&g_zui_arena);
+            g_zui_ctx = NULL;
+            return false;
+        }
+
+        g_zui_ctx->cursor = (ZuiCursor){0};
+
+        int screen_width = GetScreenWidth();
+        int screen_height = GetScreenHeight();
+        if (screen_width <= 0 || screen_height <= 0)
+        {
+            TraceLog(LOG_WARNING, "ZUI: Invalid screen dimensions, using defaults");
+            screen_width = ZUI_DEFAULT_SCREEN_WIDTH;
+            screen_height = ZUI_DEFAULT_SCREEN_HEIGHT;
+        }
+
+        // CRITICAL: Create root frame with proper component initialization
+        unsigned int root_item = ZuiCreateFrame((Rectangle){0, 0, (float)screen_width, (float)screen_height}, BLANK);
+        if (root_item == ZUI_ID_INVALID)
+        {
+            TraceLog(LOG_ERROR, "ZUI: Failed to create root frame");
+            ZuiUnloadArena(&g_zui_arena);
+            g_zui_ctx = NULL;
+            return false;
+        }
+
+        // Verify root frame has transform component
+        if (!ZuiItemHasComponent(root_item, ZUI_COMPONENT_TRANSFORM))
+        {
+            TraceLog(LOG_ERROR, "ZUI: Root frame missing transform component");
+            ZuiUnloadArena(&g_zui_arena);
+            g_zui_ctx = NULL;
+            return false;
+        }
+
+        // Add layout component to root (it doesn't have one by default from ZuiCreateFrame)
+        ZuiItemSetLayout(root_item, ZUI_LAYOUT_NONE);
+
+        float pad = ZuiGetFramePadding(root_item);
+        g_zui_ctx->cursor.position = (Vector2){pad, pad};
+        g_zui_ctx->cursor.restPosition = g_zui_ctx->cursor.position;
+        g_zui_ctx->cursor.activeFrame = root_item;
+        g_zui_ctx->cursor.rootItem = root_item;
+
+        Vector2 dpiScale = GetWindowScaleDPI();
+        g_zui_ctx->dpiScale = (int)dpiScale.x;
+        if (g_zui_ctx->dpiScale <= 0)
+        {
+            g_zui_ctx->dpiScale = ZUI_DEFAULT_DPI_SCALE;
+        }
+
+        g_zui_ctx->font = LoadFontEx("src/resources/Inter_18pt-Regular.ttf", ZUI_BASE_FONT_SIZE * g_zui_ctx->dpiScale, 0, 0);
+        if (g_zui_ctx->font.texture.id == 0)
+        {
+            g_zui_ctx->font = GetFontDefault();
+        }
+
+        g_zui_ctx->monoFont = LoadFontEx("src/resources/Inconsolata-Regular.ttf", ZUI_BASE_FONT_SIZE * g_zui_ctx->dpiScale, 0, 0);
+        if (g_zui_ctx->monoFont.texture.id == 0)
+        {
+            g_zui_ctx->monoFont = GetFontDefault();
+        }
+
+        TraceLog(LOG_INFO, "ZUI: Initialized successfully");
+        return true;
+    }
+
+    void ZuiUpdate(void)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        const ZuiItem *root =
+            ZuiGetItem(g_zui_ctx->cursor.rootItem);
+
+        if (root)
+        {
+            ZuiDispatchUpdate(root);
+        }
+        float dt = GetFrameTime();
+        ZuiUpdateInteractions(dt);
+        ZuiUpdateAnimations(dt);
+        // ZuiUpdateFocus(dt);
+        // ZuiUpdateScroll(dt);
+    }
+
+    void ZuiRender(void)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        const ZuiItem *root =
+            ZuiGetItem(g_zui_ctx->cursor.rootItem);
+
+        if (root)
+        {
+            ZuiDispatchRender(root);
+        }
+    }
+
+    void ZuiExit(void)
+    {
+        if (!ZuiIsInitialized())
+        {
+            return;
+        }
+
+        UnloadFont(g_zui_ctx->font);
+        UnloadFont(g_zui_ctx->monoFont);
+
+#ifdef ZUI_DEBUG
+        ZuiPrintArenaStats(&g_zui_arena);
+#endif
+
+        if (g_zui_arena.buffer != NULL)
+        {
+            ZuiUnloadArena(&g_zui_arena);
+        }
+
+        g_zui_ctx = NULL;
+    }
+
+    void ZuiAdvanceCursor(const float width, const float height)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        if (width < 0.0F || height < 0.0F)
+        {
+            ZUI_REPORT_ERROR(ZUI_ERROR_INVALID_VALUE, "Negative dimensions");
+            return;
+        }
+
+        const float gap = ZuiGetFrameSpacing(g_zui_ctx->cursor.activeFrame);
+
+        if (g_zui_ctx->cursor.isRow)
+        {
+            g_zui_ctx->cursor.position.x += width + gap;
+        }
+        else
+        {
+            ZuiUpdateRestPosition();
+            g_zui_ctx->cursor.position.y += height + gap;
+        }
+    }
+
+    void ZuiPrintCursor(void)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        TraceLog(LOG_INFO, "[ZUI] Cursor position: x=%.1F, y=%.1F, activeFrame=%u",
+                 (double)g_zui_ctx->cursor.position.x,
+                 (double)g_zui_ctx->cursor.position.y,
+                 g_zui_ctx->cursor.activeFrame);
+    }
+
+    void ZuiAdvanceLine(void)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        const float gap = ZuiGetFrameSpacing(g_zui_ctx->cursor.activeFrame);
+        g_zui_ctx->cursor.position.x = g_zui_ctx->cursor.restPosition.x;
+        g_zui_ctx->cursor.tempRestPosition.x = g_zui_ctx->cursor.position.x;
+        g_zui_ctx->cursor.position.y += g_zui_ctx->cursor.lastItemBounds.height + gap;
+        g_zui_ctx->cursor.tempRestPosition.y = g_zui_ctx->cursor.position.y;
+    }
+
+    void ZuiPlaceAt(const float x, const float y)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        g_zui_ctx->cursor.position = (Vector2){x, y};
+        g_zui_ctx->cursor.tempRestPosition = g_zui_ctx->cursor.position;
+    }
+
+    void ZuiOffset(const float x, const float y)
+    {
+        if (!ZuiEnsureContext(ZUI_ERROR_NULL_CONTEXT, "Global context is NULL"))
+        {
+            return;
+        }
+
+        g_zui_ctx->cursor.position.x += x;
+        g_zui_ctx->cursor.position.y += y;
+        g_zui_ctx->cursor.tempRestPosition = g_zui_ctx->cursor.position;
     }
     // -----------------------------------------------------------------------------
 
