@@ -12,71 +12,68 @@ int main(void)
     SetTargetFPS(60);
 
     ZuiInit();
-    Texture tex = LoadTexture("src/resources/circle.png");
 
     // clang-format off
-    ZuiBeginFrame((Rectangle){16, 16, 200, 130}, tpink);
+    ZuiBeginVertical((Vector2){16, 16}, 8, tpink);
         ZuiFramePad(16.0F);
         ZuiNewLabel("Login info");
-        ZuiLabelAlignX(ZUI_ALIGN_X_CENTER);
+        
         ZuiOffset(0,8);
-        ZuiBeginRow();
+        ZuiBeginRow(4);
            ZuiNewLabel("Username:");
            ZuiNewFrame( tpink, 80, 18);
         ZuiEndRow();
-        ZuiBeginRow();
+        ZuiBeginRow(4);
            ZuiNewLabel("Password:");
-            ZuiLabelOffset(4,0);
             ZuiNewFrame(tpink, 80, 18);
+            ZuiOffsetLast(2,0);
         ZuiEndRow();
-        ZuiNewLabel("Login");
-        ZuiLabelAlignX(ZUI_ALIGN_X_RIGHT);
-        ZuiLabelOffset(-12,8);
+            ZuiNewLabel("Login");
+            ZuiOffsetLast(55,0);
         ZuiLabelBackgroundColor(tpink);
-    ZuiEndFrame();
+    ZuiEndVertical();
 
-    ZuiBeginFrame((Rectangle){236, 16, 300, 47}, tpink);
-        ZuiFrameGap(16.0F);
+    ZuiBeginHorizontal((Vector2){236, 16}, 8, tpink);
+        ZuiFrameGap(8.0F);
         ZuiFramePad(16.0F);
-        ZuiBeginRow();
         ZuiNewLabel("File");
         ZuiNewLabel("Edit");
         ZuiNewLabel("Selection");
         ZuiNewLabel("Window");
         ZuiNewLabel("Help");
-        ZuiEndRow();
-    ZuiEndFrame();
+    ZuiEndHorizontal();
 
-    ZuiBeginFrame((Rectangle){16, 160, 200, 146}, tpink);
+    ZuiBeginVertical((Vector2){16, 160}, 8, tpink);
         ZuiFramePad(16.0F);
         ZuiNewLabel("Save File");
-        ZuiLabelAlignX(ZUI_ALIGN_X_CENTER);
-        ZuiOffset(0,8);
-        ZuiBeginRow();
+        ZuiBeginRow(4);
             ZuiNewLabel("Filename:");
             ZuiNewFrame(tpink, 96, 18);
         ZuiEndRow();
-        ZuiBeginRow();
+        ZuiBeginRow(4);
             ZuiNewLabel("Location:");
-            ZuiLabelOffset(4,0);
             ZuiNewFrame(tpink, 96, 18);
+            ZuiOffsetLast(2,0);
         ZuiEndRow();
-        ZuiOffset(64,12);
-        ZuiBeginRow();
+        ZuiBeginRow(4);
             ZuiFrameGap(12.0F);
             ZuiNewLabel("Cancel");
             ZuiLabelBackgroundColor(tpink);
             ZuiNewLabel("Save");
             ZuiLabelBackgroundColor(tpink);
         ZuiEndRow();
-    ZuiEndFrame();
+    ZuiEndVertical();
 
-    ZuiBeginFrame((Rectangle){236, 80, 144, 198}, tpink);
+    ZuiBeginVertical((Vector2){236, 80}, 4, tpink);
         ZuiFramePad(16.0F);
         ZuiFrameGap(4.0F);
-        ZuiNewFrame(tpink, 112, 44);
-        ZuiOffset(0,24);
-        ZuiBeginRow();
+       
+        ZuiSpace(0, 2);
+        uint32_t l = ZuiNewFrame(tpink, 112, 44); // Display
+        ZuiItemSetAlign(l, ZUI_ALIGN_CENTER);
+        ZuiSpace(0,8);
+
+        ZuiBeginRow(4);
             ZuiNewMonoLabel("[7]");
             ZuiLabelBackgroundColor(tpink);
             ZuiNewMonoLabel("[8]");
@@ -85,8 +82,9 @@ int main(void)
             ZuiLabelBackgroundColor(tpink);
             ZuiNewMonoLabel("[/]");
             ZuiLabelBackgroundColor(tpink);
-        ZuiEndRow();
-        ZuiBeginRow();
+        ZuiEndRow() ;
+            
+        ZuiBeginRow(4);
             ZuiNewMonoLabel("[4]");
             ZuiLabelBackgroundColor(tpink);
             ZuiNewMonoLabel("[5]");
@@ -96,7 +94,8 @@ int main(void)
             ZuiNewMonoLabel("[*]");
             ZuiLabelBackgroundColor(tpink);
         ZuiEndRow();
-         ZuiBeginRow();
+                   
+        ZuiBeginRow(4);
             ZuiNewMonoLabel("[1]");
             ZuiLabelBackgroundColor(tpink);
             ZuiNewMonoLabel("[2]");
@@ -106,7 +105,8 @@ int main(void)
             ZuiNewMonoLabel("[-]");
             ZuiLabelBackgroundColor(tpink);
         ZuiEndRow();
-        ZuiBeginRow();
+    
+        ZuiBeginRow(4);
             ZuiNewMonoLabel("[0]");
             ZuiLabelBackgroundColor(tpink);
             ZuiNewMonoLabel("[.]");
@@ -116,27 +116,28 @@ int main(void)
             ZuiNewMonoLabel("[+]");
             ZuiLabelBackgroundColor(tpink);
         ZuiEndRow();
-    ZuiEndFrame();
+    ZuiEndVertical();    
 
-    ZuiBeginFrame((Rectangle){405, 80, 190, 220}, tpink);
-        ZuiBeginRow();
+    Texture tex = LoadTexture("src/resources/circle.png");
+    ZuiBeginVertical((Vector2){405, 80}, 8, tpink);
+            ZuiBeginRow(4);
             ZuiNewTexture(tex);
             ZuiNewTexture(tex);
             ZuiNewTexture(tex);
             ZuiNewTexture(tex);
             ZuiNewTexture(tex);
         ZuiEndRow();
-        ZuiBeginRow();
+        ZuiBeginRow(4);
             ZuiOffset(8,0);
             ZuiNew9Slice(tex, 128, 128, 16, 16, 16, 16);
             ZuiNew3YSlice(tex, 128, 16, 16);
         ZuiEndRow();
-        ZuiBeginRow();
+        ZuiBeginRow(4);
             ZuiOffset(8,0);
             ZuiNew3XSlice(tex, 128, 16, 16);
             ZuiNewTexture(tex);
         ZuiEndRow();
-    ZuiEndFrame();
+    ZuiEndVertical();
     // clang-format on
 
     while (!WindowShouldClose())
